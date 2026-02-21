@@ -89,7 +89,7 @@
 
 ## TASK-008
 - Priority: 3
-- Status: TODO
+- Status: DONE
 - Dependencies: [TASK-003, TASK-004, TASK-005, TASK-006]
 - Description: Update specs/cli-design.md with correct examples
   - Update all output examples with correct paths
