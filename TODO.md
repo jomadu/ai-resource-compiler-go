@@ -41,7 +41,7 @@
 
 ## TASK-004
 - Priority: 2
-- Status: TODO
+- Status: DONE
 - Dependencies: [TASK-002]
 - Description: Create specs/kiro-compiler.md
   - Rules → .kiro/steering/{id}.md
