@@ -65,7 +65,7 @@
 
 ## TASK-006
 - Priority: 2
-- Status: TODO
+- Status: DONE
 - Dependencies: [TASK-002]
 - Description: Create specs/copilot-compiler.md
   - Rules → .github/instructions/{id}.instructions.md
