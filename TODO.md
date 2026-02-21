@@ -100,7 +100,7 @@
 
 ## TASK-009
 - Priority: 4
-- Status: TODO
+- Status: DONE
 - Dependencies: [TASK-003, TASK-004, TASK-005, TASK-006]
 - Description: Update specs/README.md index
   - Remove references to non-existent specs (compilation-pipeline.md, fragment-handling.md, output-management.md)
