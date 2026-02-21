@@ -53,7 +53,7 @@
 
 ## TASK-005
 - Priority: 2
-- Status: TODO
+- Status: DONE
 - Dependencies: [TASK-002]
 - Description: Create specs/claude-compiler.md
   - Rules → .claude/rules/{id}.md
