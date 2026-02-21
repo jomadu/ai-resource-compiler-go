@@ -4,13 +4,14 @@
 - Priority: 1
 - Status: DONE
 - Dependencies: []
-- Description: Update README.md with correct paths from MAPPING.md
+- Description: Update README.md with correct path conventions
   - Fix "Supported Targets" table with correct output path examples
   - Update "Compilation Results" section to explain modular output
   - Remove misleading note about single-file targets
-  - Add "Recommended Installation Locations" table from MAPPING.md
+  - Add "Recommended Installation Locations" table
   - Update code examples to show correct paths
   - Clarify compiler returns relative paths, users choose installation location
+  - Note: Path conventions should match target-formats.md spec
 
 ## TASK-002
 - Priority: 1
@@ -21,9 +22,10 @@
   - Add file extension conventions per target (.mdc, .instructions.md, .prompt.md)
   - Add Claude prompt directory structure ({id}/SKILL.md)
   - Add frontmatter specifications for Cursor (.mdc) and Copilot (.instructions.md)
-  - Update all examples to show correct paths from MAPPING.md
+  - Update all examples to show correct paths
   - Add naming conventions section (single vs collection items)
   - Update format comparison table
+  - Note: This spec becomes the source of truth for path conventions
 
 ## TASK-003
 - Priority: 2
@@ -78,7 +80,7 @@
 - Status: TODO
 - Dependencies: [TASK-003, TASK-004, TASK-005, TASK-006]
 - Description: Update specs/compiler-architecture.md with correct examples
-  - Update all path examples to match MAPPING.md
+  - Update all path examples to match target-formats.md conventions
   - Add naming conventions section
   - Update CompilationResult examples
   - Add note about recommended installation locations
@@ -104,5 +106,5 @@
   - Remove references to non-existent specs (compilation-pipeline.md, fragment-handling.md, output-management.md)
   - Add actual spec list with current status
   - Update JTBDs to reflect modular approach
-  - Add note about MAPPING.md as source of truth for paths
+  - Document that path conventions are defined in target-formats.md
   - List all four target compiler specs (kiro, cursor, claude, copilot)

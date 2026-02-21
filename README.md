@@ -73,12 +73,12 @@ arc compile --target cursor prompts.yml
 
 ## Supported Targets
 
-| Target | Output Path Examples | Notes |
-|--------|---------------------|-------|
-| `kiro` | `api-standards.md`, `backend_api.md` | Rules and prompts as markdown |
-| `cursor` | `api-standards.mdc`, `backend_api.mdc` | MDC format with frontmatter |
-| `claude` | `api-standards.md`, `deploy/SKILL.md` | Rules as .md, prompts as directories |
-| `copilot` | `api-standards.instructions.md`, `deploy.prompt.md` | Instructions and prompts with frontmatter |
+| Target | Rules | Prompts | Notes |
+|--------|-------|---------|-------|
+| `kiro` | `{id}.md` | `{id}.md` | Plain markdown |
+| `cursor` | `{id}.mdc` | `{id}.mdc` | MDC format with frontmatter |
+| `claude` | `{id}.md` | `{id}/SKILL.md` | Rules as .md, prompts as directories |
+| `copilot` | `{id}.instructions.md` | `{id}.prompt.md` | Markdown with frontmatter |
 
 ## Compilation Results
 
