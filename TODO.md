@@ -29,7 +29,7 @@
 
 ## TASK-003
 - Priority: 2
-- Status: TODO
+- Status: DONE
 - Dependencies: [TASK-002]
 - Description: Update specs/cursor-compiler.md for modular .mdc output
   - Change output from single .cursorrules to modular .cursor/rules/*.mdc
