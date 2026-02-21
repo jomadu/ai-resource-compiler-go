@@ -77,7 +77,7 @@
 
 ## TASK-007
 - Priority: 3
-- Status: TODO
+- Status: DONE
 - Dependencies: [TASK-003, TASK-004, TASK-005, TASK-006]
 - Description: Update specs/compiler-architecture.md with correct examples
   - Update all path examples to match target-formats.md conventions
