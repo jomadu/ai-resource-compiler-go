@@ -15,7 +15,7 @@
 
 ## TASK-002
 - Priority: 1
-- Status: TODO
+- Status: DONE
 - Dependencies: []
 - Description: Update specs/target-formats.md for modular approach
   - Replace single-file format specs with modular approach
