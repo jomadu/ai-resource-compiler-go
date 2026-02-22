@@ -26,7 +26,7 @@
 
 ## TASK-005
 - Priority: 2
-- Status: TODO
+- Status: DONE
 - Dependencies: [TASK-001, TASK-002]
 - Description: Write specs/cursor-compiler.md - Define Cursor IDE rules (.mdc) and commands (.md) format
 
