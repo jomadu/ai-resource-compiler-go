@@ -8,7 +8,7 @@
 
 ## TASK-002
 - Priority: 1
-- Status: TODO
+- Status: DONE
 - Dependencies: []
 - Description: Write specs/compiler-architecture.md - Define TargetCompiler interface, Target enum, CompileOptions, and compilation pipeline
 
