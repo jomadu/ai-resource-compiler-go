@@ -1,5 +1,8 @@
 # Rewrite Outline
 
+**Status:** Published to TODO.md on 2026-02-22  
+**Tasks Created:** TASK-001 through TASK-010
+
 ## Instructions for Implementation
 
 **This outline is the authoritative reference** for rewriting the specs and README.
