@@ -32,7 +32,7 @@
 
 ## TASK-006
 - Priority: 2
-- Status: TODO
+- Status: DONE
 - Dependencies: [TASK-001, TASK-002]
 - Description: Write specs/claude-compiler.md - Define Claude Code rules and skills format
 
