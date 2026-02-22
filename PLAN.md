@@ -1,32 +1,74 @@
-# Add Metadata Block and Markdown Compiler
+# Rewrite Outline
 
-## Goal
-1. Add metadata block specification for compiled rule files
-2. Add markdown compiler target
-3. Update compiler architecture to accept namespace parameter
-4. Update all compiler specs to include metadata block
+## Instructions for Implementation
 
-## Metadata Block Examples
+**This outline is the authoritative reference** for rewriting the specs and README.
 
-### Full Metadata Block (Rules)
+**Purpose:** Construct new specification documents and README based on this outline.
+
+**Reference materials:**
+- `archive/` - Historical specs and README (possibly inaccurate, use for reference only)
+- `specs/TEMPLATE.md` - Structure template for all specs
+- `PLAN.md` - Original requirements that led to this outline
+
+**Approach:**
+1. Follow this outline's structure and API design exactly
+2. Use `specs/TEMPLATE.md` for consistent spec formatting
+3. Reference `archive/` for examples and patterns, but verify against this outline
+4. When conflicts arise, this outline takes precedence
+
+---
+
+## Jobs to be Done (User Outcomes)
+
+1. **Transform AI Resources to tool-specific formats** - Convert validated resources into formats that AI coding tools understand
+2. **Maintain context in compiled output** - Preserve ruleset/rule relationships and enforcement levels in compiled files
+3. **Support multiple AI coding tools** - Generate output for Kiro, Cursor, Claude, Copilot, and generic markdown
+4. **Enable flexible integration** - Return modular results that users control (paths + content, no I/O)
+5. **Provide command-line workflow** - Compile resources via CLI with target selection
+
+## Topics of Concern (Organizing Principles)
+
+### Foundation Layer
+- **Metadata Embedding** - How ruleset/rule context is embedded in compiled rule content
+- **Compilation Architecture** - Core interfaces, data flow, and extension points
+
+### Target Layer  
+- **Target Compilers** - Tool-specific format transformations (Kiro, Cursor, Claude, Copilot, Markdown)
+
+### Interface Layer
+- **CLI** - Command-line interface for compilation workflow
+
+## Specification Structure
+
+### Foundation Specs
+
+#### `specs/metadata-block.md`
+**JTBD:** Preserve ruleset/rule context in compiled output
+
+**Key Activities:**
+- Define YAML metadata structure (ruleset, rule sections - no namespace)
+- Specify when metadata is included (rules yes, prompts no)
+- Define enforcement header format ("# Rule Name (MUST)")
+
+**Full Metadata Block Example:**
 ```yaml
 ---
-namespace: registry/package@1.0.0
 ruleset:
-    id: "cleanCode"
-    name: "Clean Code"
-    description: "Clean code practices"
-    rules:
-        - meaningfulNames
-        - smallFunctions
-        - singleResponsibility
+  id: cleanCode
+  name: Clean Code
+  description: Clean code practices
+  rules:
+    - meaningfulNames
+    - smallFunctions
+    - singleResponsibility
 rule:
-    id: meaningfulNames
-    name: "Use Meaningful Names"
-    description: "Variables and functions should have descriptive names"
-    enforcement: must
-    scope:
-        - files: ["**/*.ts", "**/*.js"]
+  id: meaningfulNames
+  name: Use Meaningful Names
+  description: Variables and functions should have descriptive names
+  enforcement: must
+  scope:
+    - files: ["**/*.ts", "**/*.js"]
 ---
 
 # Use Meaningful Names (MUST)
@@ -34,20 +76,19 @@ rule:
 Variables and functions should have descriptive names that reveal intent.
 ```
 
-### Minimal Metadata Block (Rule without optional fields)
+**Minimal Metadata Block Example (without optional fields):**
 ```yaml
 ---
-namespace: registry/package@1.0.0
 ruleset:
-    id: "cleanCode"
-    name: "Clean Code"
-    rules:
-        - meaningfulNames
-        - smallFunctions
+  id: cleanCode
+  name: Clean Code
+  rules:
+    - meaningfulNames
+    - smallFunctions
 rule:
-    id: meaningfulNames
-    name: "Use Meaningful Names"
-    enforcement: must
+  id: meaningfulNames
+  name: Use Meaningful Names
+  enforcement: must
 ---
 
 # Use Meaningful Names (MUST)
@@ -55,195 +96,224 @@ rule:
 Rule body content.
 ```
 
-### No Metadata Block (Prompts)
-```markdown
-Deploy the application to production environment.
-```
-
 **Note:** Promptsets do NOT include metadata blocks - just the prompt body.
 
-## Changes
+**Why First:** All target compilers depend on this shared format
 
-### 1. Create `specs/metadata-block.md`
-New spec defining the metadata block structure embedded in compiled rule files.
+#### `specs/compiler-architecture.md`
+**JTBD:** Provide extensible architecture for multi-target compilation
 
-**Content:**
-- YAML structure with namespace, ruleset, and rule sections
-- Namespace: Package identifier (e.g., "registry/package@1.0.0" or custom string)
-- Ruleset section includes: id, name (required), description (optional), rules array (required)
-- Rule section includes: id, name (required), description (optional), enforcement (optional), scope (optional)
-- Used by: ALL targets for rules (kiro, cursor, claude, copilot, markdown)
-- NOT used by: Prompts (any target)
-- Enforcement levels in headers: "# Rule Name (MUST)", "# Rule Name (SHOULD)", "# Rule Name (MAY)", or "# Rule Name" (no enforcement)
+**Key Activities:**
+- Define TargetCompiler interface with single Compile method
+- Define Target enum for type-safe target selection
+- Specify CompileOptions with targets list
+- Define CompilationResult structure (path + content)
+- Establish compilation pipeline and target registration
 
-### 2. Create `specs/markdown-compiler.md`
-New compiler spec for vanilla markdown target.
-
-**Format:**
-- Extension: `.md`
-- Rules: Metadata block frontmatter + body with enforcement in header
-- Prompts: Plain body (no frontmatter)
-- Installation: User-defined (no standard location)
-- Naming: Same as other targets (`{id}.md`, `{collection-id}_{item-id}.md`)
-
-### 3. Update `specs/compiler-architecture.md`
-- Add namespace parameter to CompileOptions:
-  ```go
-  type CompileOptions struct {
-      Targets          []string
-      Namespace        string  // Package identifier for metadata block
-      ResolveFragments bool
-  }
-  ```
-- Add "markdown" to supported targets table
-- Add reference to `metadata-block.md` in related specs
-- Update examples to show namespace parameter
-- Note: Namespace is required for rule compilation, optional for prompts (ignored)
-
-### 4. Update `specs/kiro-compiler.md`
-- Add metadata block to rule compilation (after frontmatter if any)
-- Format:
-  ```yaml
-  ---
-  namespace: registry/package@1.0.0
-  ruleset: {...}
-  rule: {...}
-  ---
-  
-  # Rule Name (MUST)
-  
-  Rule body
-  ```
-- Reference `metadata-block.md` for structure
-- Add enforcement in headers for rules
-- Prompts remain plain markdown (no metadata)
-
-### 5. Update `specs/cursor-compiler.md`
-- Add metadata block after MDC frontmatter for rules
-- Format:
-  ```yaml
-  ---
-  description: "Rule description"
-  globs: ["**/*.ts"]
-  alwaysApply: true
-  ---
-  
-  ---
-  namespace: registry/package@1.0.0
-  ruleset: {...}
-  rule: {...}
-  ---
-  
-  # Rule Name (MUST)
-  
-  Rule body
-  ```
-- Reference `metadata-block.md` for structure
-- Add enforcement in headers for rules
-- Prompts remain plain markdown (no metadata)
-
-### 6. Update `specs/claude-compiler.md`
-- Add metadata block after optional paths frontmatter for rules
-- Format:
-  ```yaml
-  ---
-  paths:
-    - "src/**/*.ts"
-  ---
-  
-  ---
-  namespace: registry/package@1.0.0
-  ruleset: {...}
-  rule: {...}
-  ---
-  
-  # Rule Name (MUST)
-  
-  Rule body
-  ```
-- Prompts: No metadata block (just optional name/description frontmatter + body)
-- Reference `metadata-block.md` for structure
-- Add enforcement in headers for rules
-
-### 7. Update `specs/copilot-compiler.md`
-- Add metadata block after applyTo frontmatter for rules
-- Format:
-  ```yaml
-  ---
-  applyTo: ["**/*.ts"]
-  ---
-  
-  ---
-  namespace: registry/package@1.0.0
-  ruleset: {...}
-  rule: {...}
-  ---
-  
-  # Rule Name (MUST)
-  
-  Rule body
-  ```
-- Reference `metadata-block.md` for structure
-- Add enforcement in headers for rules
-- Prompts remain plain markdown (no metadata)
-
-### 8. Update `specs/README.md`
-- Add `metadata-block.md` to foundation section
-- Add `markdown-compiler.md` to target compilers section
-- Update JTBDs to mention metadata block embedding
-
-### 9. Update `REVIEW_CHECKLIST.md`
-- Add `metadata-block.md` to foundation
-- Add `markdown-compiler.md` to target compilers
-
-### 10. Update main `README.md`
-- Add markdown to supported targets list in overview
-
-### 11. Update `specs/cli-design.md`
-- Add `--namespace` flag to compile command
-- Required for rule compilation
-- Optional for prompt compilation (ignored)
-- Example: `arc compile --target cursor --namespace myorg/rules@1.0.0 --output .cursor/rules rules.yml`
-
-## Key Changes Summary
-
-**Separate Compilation Methods by Resource Type:**
+**API:**
 ```go
+type Target string
+
+const (
+    TargetCursor   Target = "cursor"
+    TargetKiro     Target = "kiro"
+    TargetClaude   Target = "claude"
+    TargetCopilot  Target = "copilot"
+    TargetMarkdown Target = "markdown"
+)
+
+type CompileOptions struct {
+    Targets []Target
+}
+
 type TargetCompiler interface {
     Name() string
-    CompileRule(rule *airesource.Rule, namespace string) (CompilationResult, error)
-    CompileRuleset(ruleset *airesource.Ruleset, namespace string) ([]CompilationResult, error)
-    CompilePrompt(prompt *airesource.Prompt) (CompilationResult, error)
-    CompilePromptset(promptset *airesource.Promptset) ([]CompilationResult, error)
+    Compile(resource Resource) ([]CompilationResult, error)
 }
+
+func (c *Compiler) Compile(resource Resource, opts CompileOptions) ([]CompileResult, error)
 ```
 
-**All Targets Include Metadata Block for Rules:**
-- Kiro: Metadata block + body with enforcement header
-- Cursor: MDC frontmatter + metadata block + body with enforcement header
-- Claude: Paths frontmatter (optional) + metadata block + body with enforcement header
-- Copilot: ApplyTo frontmatter + metadata block + body with enforcement header
-- Markdown: Metadata block + body with enforcement header
+**Path Structure:**
+- Rules: `{collection-id}_{item-id}.{ext}`
+- Prompts: `{collection-id}_{item-id}.{ext}`
+- Claude prompts: `{collection-id}_{item-id}/SKILL.md`
 
-**Namespace Parameter:**
-- Added to CompileOptions in compiler architecture
-- Required for rule/ruleset compilation (type-safe via separate methods)
-- Not used for prompt/promptset compilation
-- Passed by CLI via `--namespace` flag
+**Why Second:** Defines contracts that all targets implement
 
-**Enforcement in Headers:**
-- All targets include enforcement level in rule headers
-- Format: "# Rule Name (MUST/SHOULD/MAY)" or "# Rule Name" (no enforcement)
+### Target Compiler Specs
 
-## Order of Execution
-1. Create `specs/metadata-block.md`
-2. Create `specs/markdown-compiler.md`
-3. Update `specs/compiler-architecture.md` (add namespace parameter)
-4. Update `specs/kiro-compiler.md` (add metadata block)
-5. Update `specs/cursor-compiler.md` (add metadata block)
-6. Update `specs/claude-compiler.md` (add metadata block)
-7. Update `specs/copilot-compiler.md` (add metadata block)
-8. Update `specs/cli-design.md` (add --namespace flag)
-9. Update `specs/README.md`
-10. Update `REVIEW_CHECKLIST.md`
-11. Update main `README.md`
+#### `specs/markdown-compiler.md`
+**JTBD:** Generate vanilla markdown output for generic use
+
+**Key Activities:**
+- Rules: Metadata block + enforcement header + body
+- Prompts: Plain body only
+- Naming: `{collection-id}_{item-id}.md`
+
+**Format:**
+- No frontmatter
+- Rules: Metadata block only
+- Prompts: Plain body
+
+**Why First Target:** Simplest format, demonstrates metadata block usage
+
+#### `specs/kiro-compiler.md`
+**JTBD:** Generate Kiro CLI steering rules and prompts
+
+**Key Activities:**
+- Rules: Metadata block + enforcement header + body
+- Prompts: Plain body only
+- Extension: `.md`
+- Paths: `{collection-id}_{item-id}.md`
+- Installation: `.kiro/steering/`, `.kiro/prompts/`
+
+**Format:**
+- No frontmatter
+- Rules: Metadata block only
+- Prompts: Plain body
+
+#### `specs/cursor-compiler.md`
+**JTBD:** Generate Cursor IDE rules and commands
+
+**Key Activities:**
+- Rules: MDC frontmatter + metadata block + enforcement header + body
+- Prompts: Plain body (no frontmatter, no metadata)
+- Extension: `.mdc` (rules), `.md` (prompts)
+- Paths: `{collection-id}_{item-id}.{ext}`
+- Installation: `.cursor/rules/`, `.cursor/commands/`
+
+**Frontmatter (Rules only):**
+```yaml
+---
+description: string       # Rule description
+globs: []string          # File patterns from scope
+alwaysApply: bool        # true for must enforcement
+---
+```
+
+#### `specs/claude-compiler.md`
+**JTBD:** Generate Claude Code rules and skills
+
+**Key Activities:**
+- Rules: Optional paths frontmatter + metadata block + enforcement header + body (`.md`)
+- Prompts: Plain body (`{collection-id}_{item-id}/SKILL.md`)
+- Paths: `{collection-id}_{item-id}.md` (rules), `{collection-id}_{item-id}/SKILL.md` (prompts)
+- Installation: `.claude/rules/`, `.claude/skills/`
+
+**Frontmatter (Rules only, optional):**
+```yaml
+---
+paths:
+  - string  # File patterns from scope
+---
+```
+
+**Note:** Prompts have no frontmatter, no metadata - just body in SKILL.md
+
+#### `specs/copilot-compiler.md`
+**JTBD:** Generate GitHub Copilot instructions and prompts
+
+**Key Activities:**
+- Rules: applyTo frontmatter + metadata block + enforcement header + body (`.instructions.md`)
+- Prompts: applyTo frontmatter + body (`.prompt.md`)
+- Paths: `{collection-id}_{item-id}.{ext}`
+- Installation: `.github/instructions/`, `.github/prompts/`
+
+**Frontmatter (Rules and Prompts):**
+```yaml
+---
+applyTo: []string        # File patterns from scope
+---
+```
+
+**Note:** excludeAgent field is omitted (not populated by compiler)
+
+### Interface Specs
+
+#### `specs/cli-design.md`
+**JTBD:** Provide command-line workflow for compilation
+
+**Key Activities:**
+- `arc compile` command with `--target` and `--output` flags
+- Multi-file and multi-target support
+- Stdout vs file output modes
+
+**Why Last:** Depends on all compiler specs being defined
+
+### Index Spec
+
+#### `specs/README.md`
+**JTBD:** Navigate specification documents by concern
+
+**Structure:**
+- JTBDs (user outcomes)
+- Topics of Concern (organizing principles)
+- Foundation specs
+- Target compiler specs
+- Interface specs
+
+## README Structure
+
+### `README.md`
+**JTBD:** Help users understand and adopt the compiler
+
+**Structure:**
+1. **Overview** - What it does, supported targets
+2. **Design Philosophy** - Pure transformation, modular output, user-controlled I/O
+3. **Installation** - Go get, CLI install
+4. **Usage** - Library API examples
+5. **CLI** - Command examples
+6. **Supported Targets** - Table with extensions and notes
+7. **Compilation Results** - Path examples, responsibility split
+8. **Recommended Locations** - Installation directories per target
+9. **Architecture** - High-level component diagram
+10. **License**
+
+**Key Updates:**
+- Add markdown to targets table
+- Show metadata block structure (without namespace)
+- Explain enforcement headers in rules
+- Show simple path structure: `{collection-id}_{item-id}.{ext}`
+- Emphasize modular output design
+
+## Writing Principles
+
+### Specs
+- Follow TEMPLATE.md structure rigorously
+- Lead with JTBD (user outcome, not mechanism)
+- Provide concrete, testable examples
+- Show metadata blocks in all rule examples (without namespace field)
+- Show enforcement headers in all rule examples
+- Show simple path structure: `{collection-id}_{item-id}.{ext}`
+- Reference dependencies explicitly
+
+### README
+- User-focused, outcome-oriented
+- Show practical examples first
+- Explain design decisions briefly
+- Link to specs for details
+- Maintain "pure transformation" philosophy
+- Keep it simple - no namespace complexity
+
+## Execution Order
+
+1. **Foundation**
+   - `specs/metadata-block.md` (shared format)
+   - `specs/compiler-architecture.md` (core contracts)
+
+2. **Targets** (parallel, any order)
+   - `specs/markdown-compiler.md` (simplest)
+   - `specs/kiro-compiler.md`
+   - `specs/cursor-compiler.md`
+   - `specs/claude-compiler.md`
+   - `specs/copilot-compiler.md`
+
+3. **Interface**
+   - `specs/cli-design.md` (depends on all targets)
+
+4. **Navigation**
+   - `specs/README.md` (index of all specs)
+
+5. **User Documentation**
+   - `README.md` (user-facing overview)
