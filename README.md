@@ -23,13 +23,13 @@ The AI Resource Compiler takes validated AI resources (rules and prompts) and co
 ## Installation
 
 ```bash
-go get github.com/maxdunn210/ai-resource-compiler-go
+go get github.com/jomadu/ai-resource-compiler-go
 ```
 
 Install CLI tool:
 
 ```bash
-go install github.com/maxdunn210/ai-resource-compiler-go/cmd/arc@latest
+go install github.com/jomadu/ai-resource-compiler-go/cmd/arc@latest
 ```
 
 ## Usage
@@ -38,7 +38,7 @@ go install github.com/maxdunn210/ai-resource-compiler-go/cmd/arc@latest
 
 ```go
 import (
-    "github.com/maxdunn210/ai-resource-compiler-go/pkg/compiler"
+    "github.com/jomadu/ai-resource-compiler-go/pkg/compiler"
 )
 
 // Create compiler
@@ -236,7 +236,7 @@ Prompts do NOT include metadata blocks - just body content (except Copilot promp
 
 ## Development
 
-This project depends on [ai-resource-core-go](https://github.com/maxdunn210/ai-resource-core-go) for resource loading and validation.
+This project depends on [ai-resource-core-go](https://github.com/jomadu/ai-resource-core-go) for resource loading and validation.
 
 **Project Structure:**
 ```
