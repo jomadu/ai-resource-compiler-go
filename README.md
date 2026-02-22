@@ -65,6 +65,20 @@ for _, result := range results {
     fmt.Printf("Path: %s\n", result.Path)
     fmt.Printf("Content:\n%s\n", result.Content)
 }
+
+// Compile multiple resources from file
+resources, err := core.LoadResources("resources.yaml")
+if err != nil {
+    log.Fatal(err)
+}
+
+for _, resource := range resources {
+    results, err := c.Compile(resource, opts)
+    if err != nil {
+        log.Fatal(err)
+    }
+    // Handle results for each resource
+}
 ```
 
 ### CLI

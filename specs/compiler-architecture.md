@@ -296,6 +296,51 @@ err.Error() == "unknown target: invalid"
 - Error returned for unknown target
 - No results produced
 
+### Example 5: Multi-Resource Compilation
+
+**Input:**
+```go
+import (
+    "github.com/jomadu/ai-resource-core-go/pkg/core"
+    "github.com/jomadu/ai-resource-compiler-go/pkg/compiler"
+)
+
+// Load multi-document YAML
+resources, err := core.LoadResources("resources.yaml")
+if err != nil {
+    log.Fatal(err)
+}
+
+// Compile each resource
+compiler := compiler.NewCompiler()
+opts := compiler.CompileOptions{
+    Targets: []compiler.Target{compiler.TargetMarkdown},
+}
+
+allResults := []compiler.CompilationResult{}
+for _, resource := range resources {
+    results, err := compiler.Compile(resource, opts)
+    if err != nil {
+        log.Fatal(err)
+    }
+    allResults = append(allResults, results...)
+}
+```
+
+**Expected Output:**
+```go
+// If resources.yaml contains 2 rules and 1 prompt:
+len(allResults) == 3
+allResults[0].Path == "cleanCode_meaningfulNames.md"
+allResults[1].Path == "security_noSecrets.md"
+allResults[2].Path == "codeReview_reviewPR.md"
+```
+
+**Verification:**
+- Each resource from multi-document YAML compiled independently
+- Results aggregated across all resources
+- Demonstrates integration with ai-resource-core-go
+
 ## Notes
 
 **Design Philosophy:**
