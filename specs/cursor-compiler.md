@@ -13,16 +13,30 @@ Compile AI Resources to Cursor's modular MDC format, producing `.mdc` files with
 - Set alwaysApply based on resource kind
 
 ## Acceptance Criteria
-- [x] Output is MDC format with YAML frontmatter
-- [x] One file per resource or collection item
-- [x] Frontmatter includes description, globs, alwaysApply
-- [x] Paths use resource ID: {id}.mdc
-- [x] Collection items use {collection-id}_{item-id}.mdc naming
-- [x] Prompts have alwaysApply: true
-- [x] Rules have alwaysApply: false by default
-- [x] Globs extracted from scope.include
-- [x] Multi-line bodies preserve formatting
-- [x] Empty bodies are skipped
+- [ ] Output is MDC format with YAML frontmatter
+- [ ] One file per resource or collection item
+- [ ] Frontmatter includes description, globs, alwaysApply
+- [ ] Paths use resource ID: {id}.mdc
+- [ ] Collection items use {collection-id}_{item-id}.mdc naming
+- [ ] Prompts have alwaysApply: true
+- [ ] Rules have alwaysApply: false by default
+- [ ] Globs extracted from scope.include
+- [ ] Multi-line bodies preserve formatting
+- [ ] Empty bodies are skipped
+
+## Target Format
+
+**File Extension:** `.mdc`  
+**Format:** MDC with YAML frontmatter  
+**Installation Locations:**
+- Rules: `.cursor/rules/`
+- Prompts: `.cursor/commands/`
+
+**Naming Conventions:**
+- Single resources: `{id}.mdc`
+  - Example: `id: api-standards` → `api-standards.mdc`
+- Collection items: `{collection-id}_{item-id}.mdc`
+  - Example: Ruleset `id: backend` with rule `id: api` → `backend_api.mdc`
 
 ## Data Structures
 
@@ -222,7 +236,6 @@ function format_mdc(frontmatter, body):
 ## Dependencies
 
 - `compiler-architecture.md` - TargetCompiler interface
-- `target-formats.md` - Cursor format specification
 - `ai-resource-core-go` - Resource types
 
 ## Implementation Mapping
@@ -233,7 +246,6 @@ function format_mdc(frontmatter, body):
 
 **Related specs:**
 - `compiler-architecture.md` - Compiler interface
-- `target-formats.md` - Format specification
 
 ## Examples
 

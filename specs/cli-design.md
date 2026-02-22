@@ -163,7 +163,6 @@ function run_compile(args):
 ## Dependencies
 
 - `compiler-architecture.md` - Compiler API
-- `target-formats.md` - Target format specifications
 - Flag parsing library (e.g., spf13/cobra or stdlib flag)
 
 ## Implementation Mapping
@@ -176,7 +175,10 @@ function run_compile(args):
 
 **Related specs:**
 - `compiler-architecture.md` - Compilation API
-- `target-formats.md` - Target format specifications
+- `kiro-compiler.md` - Kiro target format
+- `cursor-compiler.md` - Cursor target format
+- `claude-compiler.md` - Claude target format
+- `copilot-compiler.md` - Copilot target format
 
 ## Examples
 

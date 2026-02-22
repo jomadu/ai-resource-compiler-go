@@ -13,16 +13,37 @@ Compile AI Resources to GitHub Copilot's modular format, producing `.instruction
 - Output markdown format
 
 ## Acceptance Criteria
-- [x] Rules output as .instructions.md with frontmatter
-- [x] Prompts output as .prompt.md with frontmatter
-- [x] One file per resource or collection item
-- [x] Frontmatter includes applyTo and excludeAgent
-- [x] Paths use resource ID: {id}.instructions.md or {id}.prompt.md
-- [x] Collection items use {collection-id}_{item-id} naming
-- [x] applyTo extracted from scope.include
-- [x] excludeAgent optional (empty array if not specified)
-- [x] Multi-line bodies preserve formatting
-- [x] Empty bodies are skipped
+- [ ] Rules output as .instructions.md with frontmatter
+- [ ] Prompts output as .prompt.md with frontmatter
+- [ ] One file per resource or collection item
+- [ ] Frontmatter includes applyTo and excludeAgent
+- [ ] Paths use resource ID: {id}.instructions.md or {id}.prompt.md
+- [ ] Collection items use {collection-id}_{item-id} naming
+- [ ] applyTo extracted from scope.include
+- [ ] excludeAgent optional (empty array if not specified)
+- [ ] Multi-line bodies preserve formatting
+- [ ] Empty bodies are skipped
+
+## Target Format
+
+**File Extensions:**
+- Rules: `.instructions.md`
+- Prompts: `.prompt.md`
+
+**Format:** Markdown with YAML frontmatter  
+**Installation Locations:**
+- Rules: `.github/instructions/`
+- Prompts: `.github/prompts/`
+
+**Naming Conventions:**
+- Single rule: `{id}.instructions.md`
+  - Example: `id: api-standards` → `api-standards.instructions.md`
+- Single prompt: `{id}.prompt.md`
+  - Example: `id: deploy` → `deploy.prompt.md`
+- Collection rule items: `{collection-id}_{item-id}.instructions.md`
+  - Example: Ruleset `id: backend` with rule `id: api` → `backend_api.instructions.md`
+- Collection prompt items: `{collection-id}_{item-id}.prompt.md`
+  - Example: Promptset `id: ci-workflows` with prompt `id: deploy` → `ci-workflows_deploy.prompt.md`
 
 ## Data Structures
 
@@ -208,7 +229,6 @@ function format_with_frontmatter(frontmatter, body):
 ## Dependencies
 
 - `compiler-architecture.md` - TargetCompiler interface
-- `target-formats.md` - Copilot format specification
 - `ai-resource-core-go` - Resource types
 
 ## Implementation Mapping
@@ -219,7 +239,6 @@ function format_with_frontmatter(frontmatter, body):
 
 **Related specs:**
 - `compiler-architecture.md` - Compiler interface
-- `target-formats.md` - Format specification
 
 ## Examples
 

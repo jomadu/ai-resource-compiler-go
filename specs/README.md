@@ -18,7 +18,6 @@
 - **Modular Output Generation** - Return relative paths and content for user-controlled file writing
 
 ### Target Formats
-- **Path Conventions** - Defined in [target-formats.md](target-formats.md) as source of truth
 - **Kiro CLI** - Modular markdown format (.kiro/steering/, .kiro/prompts/)
 - **Cursor** - Modular MDC format (.cursor/rules/, .cursor/commands/)
 - **Claude Code** - Modular format (.claude/rules/, .claude/skills/)
@@ -40,7 +39,6 @@
  
 ### Foundation
 - [compiler-architecture.md](compiler-architecture.md) - Overall compilation system design
-- [target-formats.md](target-formats.md) - Specification of each target format (source of truth for path conventions)
 
 ### CLI
 - [cli-design.md](cli-design.md) - Command-line interface specification

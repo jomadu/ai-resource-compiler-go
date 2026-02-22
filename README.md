@@ -6,7 +6,7 @@ Compile [AI Resource Specification](https://github.com/jomadu/ai-resource-spec) 
 
 `ai-resource-compiler-go` transforms validated AI resources into formats consumed by AI coding tools:
 
-- **Kiro CLI** - AWS AI assistant format
+- **Kiro CLI** - `.kiro/steering/*.md` and `.kiro/prompts/*.md` formats
 - **Cursor** - `.cursor/rules/*.mdc` formats
 - **Claude Code** - `.claude/rules/*.md` and `.claude/skills/*/SKILL.md` formats
 - **GitHub Copilot** - `.github/instructions/*.instructions.md` and `.github/prompts/*.prompt.md` formats

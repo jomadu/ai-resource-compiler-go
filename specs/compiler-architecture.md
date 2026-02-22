@@ -35,13 +35,25 @@ type Compiler struct {
 ```go
 type TargetCompiler interface {
     Name() string
-    Compile(resource *airesource.Resource) ([]CompilationResult, error)
+    CompileRule(rule *airesource.Rule, namespace string) (CompilationResult, error)
+    CompileRuleset(ruleset *airesource.Ruleset, namespace string) ([]CompilationResult, error)
+    CompilePrompt(prompt *airesource.Prompt) (CompilationResult, error)
+    CompilePromptset(promptset *airesource.Promptset) ([]CompilationResult, error)
 }
 ```
 
 **Methods:**
 - `Name()` - Target identifier (e.g., "kiro", "cursor")
-- `Compile()` - Transform resource to target format, returns one or more results
+- `CompileRule()` - Transform single rule to target format, requires namespace for metadata block
+- `CompileRuleset()` - Transform ruleset to target format, returns one result per rule, requires namespace
+- `CompilePrompt()` - Transform single prompt to target format, no namespace needed
+- `CompilePromptset()` - Transform promptset to target format, returns one result per prompt, no namespace needed
+
+**Design Notes:**
+- Separate methods for rules vs prompts reflect different compilation needs
+- Namespace required for rules (metadata block), not used for prompts
+- Type-safe: compiler signature enforces namespace where needed
+- Single resources return one result, collections return multiple results
 
 ### CompilationResult
 ```go
@@ -86,15 +98,21 @@ type CompilationResult struct {
 ```go
 type CompileOptions struct {
     Targets          []string
+    Namespace        string  // Required for rules/rulesets, ignored for prompts
     ResolveFragments bool
 }
 ```
 
 **Fields:**
 - `Targets` - List of target names to compile to
+- `Namespace` - Package identifier for metadata block (e.g., "registry/package@1.0.0")
 - `ResolveFragments` - Whether to resolve fragments before compilation (default: true)
 
-**Note:** Output directory management is the caller's responsibility. The compiler returns relative paths; users decide where to write files. See "Recommended Installation Locations" above for target-specific directory conventions.
+**Note:** 
+- Namespace is required when compiling rules/rulesets (used in metadata block)
+- Namespace is ignored when compiling prompts/promptsets
+- Output directory management is the caller's responsibility
+- The compiler returns relative paths; users decide where to write files
 
 ### CompileResult
 ```go
@@ -117,11 +135,16 @@ type CompileResult struct {
 1. Load resource using ai-resource-core-go
 2. Validate resource (schema + semantic)
 3. Resolve fragments if enabled
-4. For each target:
+4. Determine resource kind
+5. For each target:
    - Get target compiler
-   - Compile resource to target format
+   - Call appropriate compile method based on resource kind:
+     - Rule → CompileRule(rule, namespace)
+     - Ruleset → CompileRuleset(ruleset, namespace)
+     - Prompt → CompilePrompt(prompt)
+     - Promptset → CompilePromptset(promptset)
    - Collect results (one or more path/content pairs)
-5. Return results for all targets
+6. Return results for all targets
 
 **Pseudocode:**
 ```
@@ -134,6 +157,10 @@ function Compile(resource, options):
     if options.ResolveFragments:
         resource = resolve_fragments(resource)
     
+    // Validate namespace for rules
+    if (resource.Kind == Rule or resource.Kind == Ruleset) and options.Namespace == "":
+        return error("namespace required for rule compilation")
+    
     // Compile to each target
     results = []
     for target_name in options.Targets:
@@ -145,7 +172,24 @@ function Compile(resource, options):
             })
             continue
         
-        compilation_results, err = compiler.Compile(resource)
+        // Call appropriate compile method based on resource kind
+        var compilation_results []CompilationResult
+        var err error
+        
+        switch resource.Kind:
+            case Rule:
+                result, err = compiler.CompileRule(resource, options.Namespace)
+                compilation_results = []CompilationResult{result}
+            case Ruleset:
+                compilation_results, err = compiler.CompileRuleset(resource, options.Namespace)
+            case Prompt:
+                result, err = compiler.CompilePrompt(resource)
+                compilation_results = []CompilationResult{result}
+            case Promptset:
+                compilation_results, err = compiler.CompilePromptset(resource)
+            default:
+                err = error("unsupported resource kind: {resource.Kind}")
+        
         results.append(CompileResult{
             Target: target_name,
             Results: compilation_results,
@@ -175,14 +219,16 @@ function GetTarget(name string) TargetCompiler:
 | Empty targets list | Error: "no targets specified" |
 | Fragment resolution fails | Return error, don't attempt compilation |
 | Empty body | Skip output (no file created) |
-| Single resource | Returns one result per target with `{id}.{ext}` path |
-| Collection item | Returns one result per item with `{collection-id}_{item-id}.{ext}` path |
+| Missing namespace for rule | Error: "namespace required for rule compilation" |
+| Namespace provided for prompt | Ignored (prompts don't use namespace) |
+| Single rule/prompt | Returns one result with `{id}.{ext}` path |
+| Ruleset/promptset | Returns one result per item with `{collection-id}_{item-id}.{ext}` path |
 | Empty collection | No files created |
 
 ## Dependencies
 
 - `ai-resource-core-go` - Resource loading and validation
-- Target compiler implementations (kiro, cursor, claude, copilot)
+- Target compiler implementations (kiro, cursor, claude, copilot, markdown)
 
 ## Implementation Mapping
 
@@ -194,14 +240,15 @@ function GetTarget(name string) TargetCompiler:
 - `pkg/targets/cursor/compiler.go` - Cursor target implementation
 - `pkg/targets/claude/compiler.go` - Claude target implementation
 - `pkg/targets/copilot/compiler.go` - Copilot target implementation
+- `pkg/targets/markdown/compiler.go` - Markdown target implementation
 
 **Related specs:**
-- `compilation-pipeline.md` - Detailed pipeline stages
-- `target-formats.md` - Target format specifications
+- `metadata-block.md` - Metadata block structure for rules
 - `kiro-compiler.md` - Kiro target implementation
 - `cursor-compiler.md` - Cursor target implementation
 - `claude-compiler.md` - Claude target implementation
 - `copilot-compiler.md` - Copilot target implementation
+- `markdown-compiler.md` - Markdown target implementation
 
 ## Examples
 
@@ -226,7 +273,7 @@ len(results) == 1
 results[0].Target == "cursor"
 len(results[0].Results) == 1
 results[0].Results[0].Path == "deploy.mdc"
-results[0].Results[0].Content == []byte("---\ndescription: Deploy Application\nalwaysApply: true\n---\n\nDeploy the application")
+results[0].Results[0].Content == []byte("Deploy the application")
 results[0].Error == nil
 ```
 
@@ -236,13 +283,14 @@ results[0].Error == nil
 - Content includes frontmatter
 - No errors
 
-### Example 2: Multi-Target Compilation
+### Example 2: Single Rule Compilation with Namespace
 
 **Input:**
 ```go
 // Single rule: id: api-standards
 results, err := c.Compile(rule, compiler.Options{
     Targets: []string{"kiro", "cursor", "claude"},
+    Namespace: "myorg/standards@1.0.0",
 })
 ```
 
@@ -260,9 +308,29 @@ results[2].Results[0].Path == "api-standards.md"
 **Verification:**
 - Three CompileResults returned
 - Each target has different extension
+- All include metadata block with namespace
 - All successful
 
-### Example 3: Unknown Target Error
+### Example 3: Missing Namespace Error
+
+**Input:**
+```go
+// Rule without namespace
+results, err := c.Compile(rule, compiler.Options{
+    Targets: []string{"cursor"},
+})
+```
+
+**Expected Output:**
+```go
+err.Error() == "namespace required for rule compilation"
+```
+
+**Verification:**
+- Error returned before compilation
+- No CompileResults generated
+
+### Example 4: Unknown Target Error
 
 **Input:**
 ```go
@@ -282,7 +350,7 @@ results[0].Error.Error() == "unknown target: unknown"
 - Error indicates unknown target
 - Compilation not attempted
 
-### Example 4: Partial Failure
+### Example 5: Partial Failure
 
 **Input:**
 ```go
@@ -304,13 +372,14 @@ results[2].Error == nil  // kiro succeeded
 - Failures don't stop other compilations
 - Errors collected per target
 
-### Example 5: Collection Compilation
+### Example 6: Ruleset Compilation
 
 **Input:**
 ```go
 // Ruleset: id: backend with rules: api, security
 results, err := c.Compile(ruleset, compiler.Options{
     Targets: []string{"cursor"},
+    Namespace: "myorg/backend@1.0.0",
 })
 ```
 

@@ -11,13 +11,27 @@ Compile AI Resources to Kiro CLI's plain markdown format, producing `.md` files 
 - Output plain markdown (no frontmatter)
 
 ## Acceptance Criteria
-- [x] Output is plain markdown format
-- [x] One file per resource or collection item
-- [x] No frontmatter
-- [x] Paths use resource ID: {id}.md
-- [x] Collection items use {collection-id}_{item-id}.md naming
-- [x] Multi-line bodies preserve formatting
-- [x] Empty bodies are skipped
+- [ ] Output is plain markdown format
+- [ ] One file per resource or collection item
+- [ ] No frontmatter
+- [ ] Paths use resource ID: {id}.md
+- [ ] Collection items use {collection-id}_{item-id}.md naming
+- [ ] Multi-line bodies preserve formatting
+- [ ] Empty bodies are skipped
+
+## Target Format
+
+**File Extension:** `.md`  
+**Format:** Plain markdown (no frontmatter)  
+**Installation Locations:**
+- Rules: `.kiro/steering/`
+- Prompts: `.kiro/prompts/`
+
+**Naming Conventions:**
+- Single resources: `{id}.md`
+  - Example: `id: api-standards` → `api-standards.md`
+- Collection items: `{collection-id}_{item-id}.md`
+  - Example: Ruleset `id: backend` with rule `id: api` → `backend_api.md`
 
 ## Data Structures
 
@@ -149,7 +163,6 @@ function compile_ruleset(resource):
 ## Dependencies
 
 - `compiler-architecture.md` - TargetCompiler interface
-- `target-formats.md` - Kiro format specification
 - `ai-resource-core-go` - Resource types
 
 ## Implementation Mapping
@@ -159,7 +172,6 @@ function compile_ruleset(resource):
 
 **Related specs:**
 - `compiler-architecture.md` - Compiler interface
-- `target-formats.md` - Format specification
 
 ## Examples
 

@@ -12,15 +12,36 @@ Compile AI Resources to Claude Code's modular format, producing `.md` files for 
 - Output markdown format
 
 ## Acceptance Criteria
-- [x] Rules output as plain markdown .md files
-- [x] Prompts output as directories with SKILL.md file
-- [x] One file per resource or collection item
-- [x] Prompt frontmatter includes name and description (optional)
-- [x] Rule files are plain markdown (no frontmatter)
-- [x] Paths use resource ID: {id}.md or {id}/SKILL.md
-- [x] Collection items use {collection-id}_{item-id} naming
-- [x] Multi-line bodies preserve formatting
-- [x] Empty bodies are skipped
+- [ ] Rules output as plain markdown .md files
+- [ ] Prompts output as directories with SKILL.md file
+- [ ] One file per resource or collection item
+- [ ] Prompt frontmatter includes name and description (optional)
+- [ ] Rule files are plain markdown (no frontmatter)
+- [ ] Paths use resource ID: {id}.md or {id}/SKILL.md
+- [ ] Collection items use {collection-id}_{item-id} naming
+- [ ] Multi-line bodies preserve formatting
+- [ ] Empty bodies are skipped
+
+## Target Format
+
+**File Extensions:**
+- Rules: `.md`
+- Prompts: `SKILL.md` (in directory)
+
+**Format:** Markdown with optional YAML frontmatter (prompts only)  
+**Installation Locations:**
+- Rules: `.claude/rules/`
+- Prompts: `.claude/skills/`
+
+**Naming Conventions:**
+- Single rule: `{id}.md`
+  - Example: `id: api-standards` → `api-standards.md`
+- Single prompt: `{id}/SKILL.md`
+  - Example: `id: deploy` → `deploy/SKILL.md`
+- Collection rule items: `{collection-id}_{item-id}.md`
+  - Example: Ruleset `id: backend` with rule `id: api` → `backend_api.md`
+- Collection prompt items: `{collection-id}_{item-id}/SKILL.md`
+  - Example: Promptset `id: ci-workflows` with prompt `id: deploy` → `ci-workflows_deploy/SKILL.md`
 
 ## Data Structures
 
@@ -214,7 +235,6 @@ function format_with_frontmatter(frontmatter, body):
 ## Dependencies
 
 - `compiler-architecture.md` - TargetCompiler interface
-- `target-formats.md` - Claude format specification
 - `ai-resource-core-go` - Resource types
 
 ## Implementation Mapping
@@ -225,7 +245,6 @@ function format_with_frontmatter(frontmatter, body):
 
 **Related specs:**
 - `compiler-architecture.md` - Compiler interface
-- `target-formats.md` - Format specification
 
 ## Examples
 
