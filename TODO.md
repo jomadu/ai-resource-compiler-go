@@ -38,7 +38,7 @@
 
 ## TASK-007
 - Priority: 2
-- Status: TODO
+- Status: DONE
 - Dependencies: [TASK-001, TASK-002]
 - Description: Write specs/copilot-compiler.md - Define GitHub Copilot instructions and prompts format
 
