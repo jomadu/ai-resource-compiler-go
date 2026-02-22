@@ -2,7 +2,7 @@
 
 ## TASK-001
 - Priority: 1
-- Status: TODO
+- Status: DONE
 - Dependencies: []
 - Description: Write specs/metadata-block.md - Define YAML metadata structure for preserving ruleset/rule context in compiled output
 
