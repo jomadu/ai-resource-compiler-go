@@ -20,7 +20,7 @@
 
 ## TASK-004
 - Priority: 2
-- Status: TODO
+- Status: DONE
 - Dependencies: [TASK-001, TASK-002]
 - Description: Write specs/kiro-compiler.md - Define Kiro CLI steering rules and prompts format
 
