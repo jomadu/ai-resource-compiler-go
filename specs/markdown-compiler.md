@@ -86,6 +86,7 @@ function Compile(resource):
 | Empty body | Return metadata + header with empty body section |
 | Special characters in IDs | Use IDs as-is in path (sanitization handled by caller) |
 | Multi-line body | Preserve formatting and line breaks |
+| Unsupported apiVersion | Return error "unsupported apiVersion: {version} for markdown" |
 
 ## Dependencies
 

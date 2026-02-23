@@ -123,6 +123,7 @@ function Compile(resource):
 | Prompt resource | Use directory/SKILL.md path, body only |
 | Empty body | Return [frontmatter +] metadata + header with empty body |
 | Special characters in IDs | Use IDs as-is in path (sanitization handled by caller) |
+| Unsupported apiVersion | Return error "unsupported apiVersion: {version} for claude" |
 
 ## Dependencies
 

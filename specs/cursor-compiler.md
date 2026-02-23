@@ -114,6 +114,7 @@ function Compile(resource):
 | Rule with "must" | Set alwaysApply to true |
 | Prompt resource | Return body only, no frontmatter or metadata |
 | Empty body | Return frontmatter + metadata + header with empty body |
+| Unsupported apiVersion | Return error "unsupported apiVersion: {version} for cursor" |
 
 ## Dependencies
 

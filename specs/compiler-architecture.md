@@ -145,6 +145,58 @@ function Compile(resource, opts):
 - Copilot prompts: `.prompt.md`
 - Markdown: `.md`
 
+## Version Handling
+
+The compiler supports multiple spec versions by inspecting `resource.APIVersion`.
+
+### Strategy
+
+Each target compiler checks the resource version and handles version-specific structures:
+
+**Pseudocode:**
+```
+function Compile(resource):
+    switch resource.APIVersion:
+    case "ai-resource/v1":
+        return compileV1(resource)
+    case "ai-resource/v2":
+        return compileV2(resource)
+    default:
+        return error("unsupported apiVersion: " + resource.APIVersion)
+```
+
+### Version-Specific Compilation
+
+When spec versions introduce breaking changes (e.g., field structure changes), target compilers must:
+
+1. Check `resource.APIVersion` 
+2. Type assert `resource.Spec` to version-specific structure
+3. Access fields according to that version's schema
+4. Generate output appropriate for that version
+
+**Example - Enforcement field change:**
+```go
+func (c *CursorCompiler) Compile(resource Resource) ([]CompilationResult, error) {
+    switch resource.APIVersion {
+    case "ai-resource/v1":
+        // v1: enforcement is string
+        spec := resource.Spec.(RuleSpec)
+        enforcement := spec.Enforcement.(string)
+        
+    case "ai-resource/v2":
+        // v2: enforcement is object
+        spec := resource.Spec.(RuleSpecV2)
+        enforcement := spec.Enforcement.Level
+    }
+}
+```
+
+### Backward Compatibility
+
+- Compilers SHOULD support all non-deprecated spec versions
+- Compilers MUST return clear errors for unsupported versions
+- Version support is independent per target (Cursor may support v1-v2, Kiro may support v1-v3)
+
 ## Edge Cases
 
 | Condition | Expected Behavior |
@@ -155,10 +207,12 @@ function Compile(resource, opts):
 | Target compiler returns error | Propagate error, stop compilation |
 | Multiple targets requested | Compile independently, aggregate results |
 | Resource with special characters in ID | Sanitize IDs for filesystem safety |
+| Unsupported apiVersion | Return error "unsupported apiVersion: {version} for {target}" |
 
 ## Dependencies
 
 - Resource model from ai-resource-core-go (Ruleset, Rule, Promptset, Prompt)
+  - **Note:** Resource includes `APIVersion` field for version detection
 - Target-specific compilers (implement TargetCompiler interface)
 - Metadata block generation (from metadata-block.md spec)
 
@@ -340,6 +394,38 @@ allResults[2].Path == "codeReview_reviewPR.md"
 - Each resource from multi-document YAML compiled independently
 - Results aggregated across all resources
 - Demonstrates integration with ai-resource-core-go
+
+### Example 6: Multi-Version Compilation
+
+**Input:**
+```go
+// Load resources with different versions
+v1Resource, _ := core.LoadResource("v1-rule.yaml")  // apiVersion: ai-resource/v1
+v2Resource, _ := core.LoadResource("v2-rule.yaml")  // apiVersion: ai-resource/v2
+
+compiler := compiler.NewCompiler()
+opts := compiler.CompileOptions{
+    Targets: []compiler.Target{compiler.TargetMarkdown},
+}
+
+// Compile both versions
+results1, _ := compiler.Compile(v1Resource, opts)
+results2, _ := compiler.Compile(v2Resource, opts)
+```
+
+**Expected Output:**
+```go
+// Both compile successfully
+len(results1) == 1
+len(results2) == 1
+
+// Compiler handled version-specific structures internally
+```
+
+**Verification:**
+- Both v1 and v2 resources compile without error
+- Output format matches target requirements for each version
+- Compiler correctly accessed version-specific fields
 
 ## Notes
 

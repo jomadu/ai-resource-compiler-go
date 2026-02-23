@@ -119,6 +119,9 @@ type CompilationResult struct {
 ### Pure Transformation
 Compiler produces path + content pairs, doesn't perform I/O. Users decide where and how to write files.
 
+### Version Handling
+Compilers inspect `resource.APIVersion` to handle version-specific structures. When the spec introduces breaking changes (e.g., v1 → v2), target compilers use version switches to access fields correctly. Each target independently decides which spec versions to support.
+
 ## Target Comparison
 
 | Target | Rules Extension | Prompts Extension | Frontmatter | Metadata Block | Installation |
