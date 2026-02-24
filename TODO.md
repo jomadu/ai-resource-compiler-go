@@ -58,7 +58,7 @@
 
 ## TASK-009
 - Priority: 2
-- Status: TODO
+- Status: DONE
 - Dependencies: [TASK-008]
 - Issue: #5 (CLI Output Mode Ambiguity)
 - Description: Update cli-design.md spec to document directory output mode behavior. Specify that `--output <dir>` creates target subdirectories (e.g., `<dir>/markdown/`, `<dir>/kiro/`). Add `--flat` flag to disable subdirectories for single-target use. Include examples and edge cases.

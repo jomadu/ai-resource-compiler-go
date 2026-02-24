@@ -34,6 +34,7 @@ arc compile <resource-file> [flags]
 **Flags:**
 - `--target, -t` - Target format(s) to compile to (repeatable)
 - `--output, -o` - Output mode: "stdout" or directory path (default: "stdout")
+- `--flat` - Disable target subdirectories in file output mode
 - `--help, -h` - Show help information
 
 ### Output Modes
@@ -48,9 +49,11 @@ arc compile <resource-file> [flags]
 ```
 
 **File Mode:**
-- Writes each CompilationResult to `{output-dir}/{path}`
+- Default: Writes each CompilationResult to `{output-dir}/{target}/{path}`
+- With `--flat`: Writes to `{output-dir}/{path}` (no target subdirectories)
 - Creates directories as needed
 - Reports files written to stderr
+- Target subdirectories prevent filename collisions when compiling to multiple targets
 
 ## Algorithm
 
@@ -98,7 +101,10 @@ function main():
             print()
     else:
         for result in results:
-            path = args.output + "/" + result.Path
+            if args.flat:
+                path = args.output + "/" + result.Path
+            else:
+                path = args.output + "/" + result.Target + "/" + result.Path
             writeFile(path, result.Content)
             printStderr("Wrote " + path)
     
@@ -114,9 +120,13 @@ function main():
 | No targets specified | Print error, show usage, exit 1 |
 | Invalid target name | Print error with valid options, exit 1 |
 | Compilation error | Print error message, exit 1 |
-| Output directory doesn't exist | Create directory, write files |
+| Output directory doesn't exist | Create directory (including target subdirs), write files |
 | File write permission error | Print error, exit 1 |
 | Multiple targets, stdout mode | Print all results sequentially |
+| Multiple targets, file mode (no --flat) | Write to separate target subdirectories |
+| Multiple targets, file mode (--flat) | Write to same directory (last target wins on collision) |
+| Single target, file mode (no --flat) | Create target subdirectory |
+| Single target, file mode (--flat) | Write directly to output directory |
 
 ## Dependencies
 
@@ -202,11 +212,11 @@ arc compile resource.yaml --target cursor --output .cursor/rules
 
 **Output (stderr):**
 ```
-Wrote .cursor/rules/cleanCode_meaningfulNames.mdc
+Wrote .cursor/rules/cursor/cleanCode_meaningfulNames.mdc
 ```
 
 **Verification:**
-- File written to specified directory
+- File written to target subdirectory
 - Path reported to stderr
 - Exit code 0
 
@@ -219,13 +229,49 @@ arc compile resource.yaml --target markdown --target kiro --output ./output
 
 **Output (stderr):**
 ```
+Wrote ./output/markdown/cleanCode_meaningfulNames.md
+Wrote ./output/kiro/cleanCode_meaningfulNames.md
+```
+
+**Verification:**
+- Two files written to separate target subdirectories
+- No filename collision
+- Paths reported to stderr
+- Exit code 0
+
+### Example 4a: Single Target, File Output with --flat
+
+**Command:**
+```bash
+arc compile resource.yaml --target cursor --output .cursor/rules --flat
+```
+
+**Output (stderr):**
+```
+Wrote .cursor/rules/cleanCode_meaningfulNames.mdc
+```
+
+**Verification:**
+- File written directly to output directory (no target subdirectory)
+- Path reported to stderr
+- Exit code 0
+
+### Example 4b: Multiple Targets, File Output with --flat
+
+**Command:**
+```bash
+arc compile resource.yaml --target markdown --target kiro --output ./output --flat
+```
+
+**Output (stderr):**
+```
 Wrote ./output/cleanCode_meaningfulNames.md
 Wrote ./output/cleanCode_meaningfulNames.md
 ```
 
 **Verification:**
-- Two files written (same name, different content)
-- Note: Same path from different targets overwrites
+- Two files written to same directory
+- Same filename causes overwrite (kiro overwrites markdown)
 - Paths reported to stderr
 - Exit code 0
 
@@ -294,6 +340,7 @@ Flags:
   -t, --target string   Target format to compile to (repeatable)
                         Valid targets: cursor, kiro, claude, copilot, markdown
   -o, --output string   Output mode: "stdout" or directory path (default "stdout")
+      --flat            Disable target subdirectories in file output mode
   -h, --help           Show this help message
 
 Examples:
@@ -303,10 +350,13 @@ Examples:
   # Compile to multiple targets, print to stdout
   arc compile resource.yaml --target markdown --target kiro
 
-  # Compile to cursor, write to directory
+  # Compile to cursor, write to target subdirectory
   arc compile resource.yaml --target cursor --output .cursor/rules
 
-  # Compile to all targets, write to directory
+  # Compile to cursor, write directly to directory (no subdirectory)
+  arc compile resource.yaml --target cursor --output .cursor/rules --flat
+
+  # Compile to all targets, write to separate subdirectories
   arc compile resource.yaml -t cursor -t kiro -t claude -t copilot -t markdown -o ./output
 ```
 
@@ -320,6 +370,8 @@ Examples:
 **Design Rationale:**
 - **Stdout default** - Enables piping and inspection without filesystem changes
 - **File mode** - Convenient for direct installation to tool directories
+- **Target subdirectories** - Prevents filename collisions when compiling to multiple targets
+- **--flat flag** - Allows direct writes for single-target workflows (e.g., `.cursor/rules/`)
 - **Multiple targets** - Compile once, output to multiple formats
 - **Simple flags** - Minimal learning curve, standard CLI conventions
 - **Clear errors** - Help users fix issues quickly
