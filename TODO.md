@@ -23,14 +23,14 @@
 
 ## TASK-004
 - Priority: 1
-- Status: TODO
+- Status: DONE
 - Dependencies: [TASK-003]
 - Issue: #7 (Enforcement Header Formatting Inconsistency Risk)
 - Description: Add rule name validation to validation-rules.md spec. Document `ValidateRuleForCompilation(rule)` function that rejects rule names containing parentheses. Specify error message format and rationale (enforcement header parsing).
 
 ## TASK-005
 - Priority: 1
-- Status: TODO
+- Status: DONE
 - Dependencies: [TASK-003]
 - Issue: #3 (No Validation of Resource IDs for Filesystem Safety)
 - Description: Update compiler-architecture.md spec to include validation step in compilation pipeline. Add validation as step 1 in Algorithm section: "Validate resource IDs and rule names (if rule type)". Reference validation-rules.md spec in Dependencies section.

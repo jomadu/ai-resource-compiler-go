@@ -100,6 +100,43 @@ function validateID(id, fieldName):
     return nil
 ```
 
+### ValidateRuleForCompilation
+
+```go
+func ValidateRuleForCompilation(rule Rule) error
+```
+
+**Parameters:**
+- `rule` - Rule to validate for compilation
+
+**Returns:**
+- `nil` if rule name is valid
+- `ValidationError` if rule name contains parentheses
+
+**Algorithm:**
+1. Check if rule.Name contains '(' or ')'
+2. If found → return error
+3. Return nil if valid
+
+**Pseudocode:**
+```
+function ValidateRuleForCompilation(rule):
+    if rule.Name contains '(' or ')':
+        return ValidationError{
+            Field: "rule.name",
+            Value: rule.Name,
+            InvalidChar: "(" or ")",
+            Message: "rule.name cannot contain parentheses: '" + rule.Name + "'"
+        }
+    
+    return nil
+```
+
+**Rationale:**
+- Enforcement headers use format: `# {Name} ({ENFORCEMENT})`
+- Parentheses in rule name would break header parsing
+- Example: `# Use (Smart) Names (MUST)` is ambiguous - is "(Smart)" part of name or enforcement?
+
 ### Allowed Characters
 
 **Valid:** `a-z A-Z 0-9 - _`
@@ -133,6 +170,10 @@ function validateID(id, fieldName):
 | ID with spaces | Return error "{field} contains invalid character ' ' in '{id}'" |
 | ID with only valid chars | Return nil (success) |
 | Multiple invalid chars | Return error for first invalid character encountered |
+| Rule name with opening paren | Return error "rule.name cannot contain parentheses: '{name}'" |
+| Rule name with closing paren | Return error "rule.name cannot contain parentheses: '{name}'" |
+| Rule name with both parens | Return error "rule.name cannot contain parentheses: '{name}'" |
+| Rule name without parens | Return nil (success) |
 
 ## Dependencies
 
@@ -305,6 +346,50 @@ err.Error() == "ruleset.id contains invalid character ' ' in 'clean code'"
 **Verification:**
 - Space character detected and rejected
 - Error message shows space in quotes
+
+### Example 8: Rule Name with Parentheses
+
+**Input:**
+```go
+rule := Rule{
+    ID: "meaningfulNames",
+    Name: "Use (Smart) Names",
+    Enforcement: "must",
+}
+
+err := ValidateRuleForCompilation(rule)
+```
+
+**Expected Output:**
+```go
+err.Error() == "rule.name cannot contain parentheses: 'Use (Smart) Names'"
+```
+
+**Verification:**
+- Parentheses detected in rule name
+- Clear error message explaining restriction
+
+### Example 9: Valid Rule Name
+
+**Input:**
+```go
+rule := Rule{
+    ID: "meaningfulNames",
+    Name: "Use Meaningful Names",
+    Enforcement: "must",
+}
+
+err := ValidateRuleForCompilation(rule)
+```
+
+**Expected Output:**
+```go
+err == nil
+```
+
+**Verification:**
+- No parentheses in rule name
+- Validation passes
 
 ## Notes
 

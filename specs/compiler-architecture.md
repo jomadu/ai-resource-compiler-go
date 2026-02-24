@@ -184,19 +184,30 @@ path := BuildClaudePromptPath("debugging", "findBug")
 
 ### Compilation Pipeline
 
-1. Validate CompileOptions (non-empty targets list)
-2. For each requested target:
+1. Validate resource IDs and rule names (if rule type)
+2. Validate CompileOptions (non-empty targets list)
+3. For each requested target:
    - Look up registered TargetCompiler
    - Call compiler.Compile(resource)
    - Collect CompilationResults
-3. Return aggregated results from all targets
+4. Return aggregated results from all targets
 
 **Pseudocode:**
 ```
 function Compile(resource, opts):
+    // Step 1: Validate resource
+    if err := ValidateResourceIDs(resource):
+        return error(err)
+    
+    if resource.Type == "rule":
+        if err := ValidateRuleForCompilation(resource.Rule):
+            return error(err)
+    
+    // Step 2: Validate options
     if opts.Targets is empty:
         return error("no targets specified")
     
+    // Step 3: Compile for each target
     results = []
     for target in opts.Targets:
         compiler = lookupCompiler(target)
@@ -206,6 +217,7 @@ function Compile(resource, opts):
         targetResults = compiler.Compile(resource)
         results.append(targetResults)
     
+    // Step 4: Return results
     return results
 ```
 
@@ -308,6 +320,7 @@ func (c *CursorCompiler) Compile(resource Resource) ([]CompilationResult, error)
 - Target-specific compilers (implement TargetCompiler interface)
 - Metadata block generation (from metadata-block.md spec)
 - Path generation functions (shared across all target compilers)
+- Resource validation (from validation-rules.md spec)
 
 ## Implementation Mapping
 
@@ -321,8 +334,10 @@ func (c *CursorCompiler) Compile(resource Resource) ([]CompilationResult, error)
 - `pkg/targets/copilot.go` - Copilot target compiler
 - `pkg/targets/markdown.go` - Markdown target compiler
 - `internal/format/paths.go` - Implements `BuildRulePath()`, `BuildPromptPath()`, and `BuildClaudePromptPath()` functions
+- `internal/format/validation.go` - Implements `ValidateResourceIDs()` and `ValidateRuleForCompilation()` functions
 
 **Related specs:**
+- `validation-rules.md` - Resource validation before compilation
 - `metadata-block.md` - Metadata embedding used by all target compilers
 - `markdown-compiler.md` - Markdown target implementation
 - `kiro-compiler.md` - Kiro target implementation
