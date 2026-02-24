@@ -67,6 +67,7 @@ for _, result := range results {
 }
 
 // Compile multiple resources from file
+// Note: Compile() accepts a single resource. Iterate for multiple resources.
 resources, err := core.LoadResources("resources.yaml")
 if err != nil {
     log.Fatal(err)
@@ -75,7 +76,8 @@ if err != nil {
 for _, resource := range resources {
     results, err := c.Compile(resource, opts)
     if err != nil {
-        log.Fatal(err)
+        log.Printf("Failed to compile resource: %v", err)
+        continue
     }
     // Handle results for each resource
 }

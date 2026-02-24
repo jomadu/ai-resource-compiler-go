@@ -65,7 +65,7 @@
 
 ## TASK-010
 - Priority: 3
-- Status: TODO
+- Status: DONE
 - Dependencies: []
 - Issue: #6 (No Guidance on Multi-Resource Compilation)
 - Description: Update README.md to clarify multi-resource compilation pattern. Add note in "Library API" section that `Compile()` accepts single resource and users should iterate for multiple resources. Show error handling pattern in multi-resource example.
