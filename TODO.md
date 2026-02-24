@@ -51,7 +51,7 @@
 
 ## TASK-008
 - Priority: 2
-- Status: TODO
+- Status: DONE
 - Dependencies: []
 - Issue: #5 (CLI Output Mode Ambiguity)
 - Description: Update cli-design.md spec to document output format for stdout mode. Specify format: `=== {target}/{path} ===\n{content}\n\n`. Add examples showing multi-target output with path prefixes.

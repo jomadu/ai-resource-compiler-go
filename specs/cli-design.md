@@ -40,10 +40,10 @@ arc compile <resource-file> [flags]
 
 **Stdout Mode:**
 ```
-=== {path} ===
+=== {target}/{path} ===
 {content}
 
-=== {path} ===
+=== {target}/{path} ===
 {content}
 ```
 
@@ -93,7 +93,7 @@ function main():
     
     if args.output == "stdout":
         for result in results:
-            print("=== " + result.Path + " ===")
+            print("=== " + result.Target + "/" + result.Path + " ===")
             print(result.Content)
             print()
     else:
@@ -146,7 +146,7 @@ arc compile resource.yaml --target markdown
 
 **Output:**
 ```
-=== cleanCode_meaningfulNames.md ===
+=== markdown/cleanCode_meaningfulNames.md ===
 ---
 ruleset:
   id: cleanCode
@@ -178,13 +178,13 @@ arc compile resource.yaml --target markdown --target kiro --target cursor
 
 **Output:**
 ```
-=== cleanCode_meaningfulNames.md ===
+=== markdown/cleanCode_meaningfulNames.md ===
 [markdown content]
 
-=== cleanCode_meaningfulNames.md ===
+=== kiro/cleanCode_meaningfulNames.md ===
 [kiro content]
 
-=== cleanCode_meaningfulNames.mdc ===
+=== cursor/cleanCode_meaningfulNames.mdc ===
 [cursor content]
 ```
 
