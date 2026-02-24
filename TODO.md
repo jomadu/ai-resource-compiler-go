@@ -2,7 +2,7 @@
 
 ## TASK-001
 - Priority: 1
-- Status: TODO
+- Status: DONE
 - Dependencies: []
 - Issue: #1 (Metadata Block Duplication Across Targets)
 - Description: Add shared metadata generation functions to metadata-block.md spec. Document `GenerateMetadataBlock(resource)` and `GenerateEnforcementHeader(rule)` functions that all target compilers will use. Include function signatures, parameters, return values, and examples.

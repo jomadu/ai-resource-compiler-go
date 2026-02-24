@@ -59,17 +59,98 @@ rule:
 - Enforcement level uppercased (MUST, SHOULD, MAY)
 - Follows metadata block, precedes rule body
 
+## Shared Functions
+
+Target compilers use these shared functions to generate consistent metadata blocks and enforcement headers.
+
+### GenerateMetadataBlock
+
+```go
+func GenerateMetadataBlock(ruleset Ruleset, rule Rule) string
+```
+
+**Parameters:**
+- `ruleset` - Ruleset containing the rule (provides context)
+- `rule` - Rule to generate metadata for
+
+**Returns:**
+- YAML metadata block string with `---` delimiters
+
+**Algorithm:**
+1. Create YAML structure with `ruleset` and `rule` sections
+2. Add required ruleset fields: `id`, `name`, `rules`
+3. Add optional `ruleset.description` if present
+4. Add required rule fields: `id`, `name`, `enforcement`
+5. Add optional `rule.description` if present
+6. Add optional `rule.scope` if present
+7. Serialize to YAML with `---` delimiters
+8. Return formatted string
+
+**Example:**
+```go
+ruleset := Ruleset{
+    ID: "cleanCode",
+    Name: "Clean Code",
+    Rules: []string{"meaningfulNames"},
+}
+rule := Rule{
+    ID: "meaningfulNames",
+    Name: "Use Meaningful Names",
+    Enforcement: "must",
+}
+
+metadata := GenerateMetadataBlock(ruleset, rule)
+// Returns:
+// ---
+// ruleset:
+//   id: cleanCode
+//   name: Clean Code
+//   rules:
+//     - meaningfulNames
+// rule:
+//   id: meaningfulNames
+//   name: Use Meaningful Names
+//   enforcement: must
+// ---
+```
+
+### GenerateEnforcementHeader
+
+```go
+func GenerateEnforcementHeader(rule Rule) string
+```
+
+**Parameters:**
+- `rule` - Rule to generate header for
+
+**Returns:**
+- Markdown header string in format `# {Name} ({ENFORCEMENT})`
+
+**Algorithm:**
+1. Extract rule name from `rule.Name`
+2. Extract enforcement level from `rule.Enforcement`
+3. Uppercase enforcement level (must → MUST)
+4. Format as `# {Name} ({ENFORCEMENT})`
+5. Return formatted string
+
+**Example:**
+```go
+rule := Rule{
+    Name: "Use Meaningful Names",
+    Enforcement: "must",
+}
+
+header := GenerateEnforcementHeader(rule)
+// Returns: "# Use Meaningful Names (MUST)"
+```
+
 ## Algorithm
 
 1. Check resource type (rule vs prompt)
 2. If prompt: return body content only
-3. If rule: construct metadata block
-4. Add ruleset section with required fields
-5. Add optional ruleset.description if present
-6. Add rule section with required fields
-7. Add optional rule.description and rule.scope if present
-8. Generate enforcement header from rule.name and rule.enforcement
-9. Concatenate: metadata block + enforcement header + rule body
+3. If rule: call `GenerateMetadataBlock(ruleset, rule)`
+4. Call `GenerateEnforcementHeader(rule)`
+5. Concatenate: metadata block + enforcement header + rule body
 
 **Pseudocode:**
 ```
@@ -77,8 +158,8 @@ function EmbedMetadata(resource):
     if resource.type == "prompt":
         return resource.body
     
-    metadata = BuildYAMLBlock(resource.ruleset, resource.rule)
-    header = FormatEnforcementHeader(resource.rule.name, resource.rule.enforcement)
+    metadata = GenerateMetadataBlock(resource.ruleset, resource.rule)
+    header = GenerateEnforcementHeader(resource.rule)
     
     return metadata + "\n" + header + "\n\n" + resource.body
 ```
@@ -101,12 +182,12 @@ function EmbedMetadata(resource):
 ## Implementation Mapping
 
 **Source files:**
-- `internal/format/metadata.go` - Metadata block generation logic
+- `internal/format/metadata.go` - Implements `GenerateMetadataBlock()` and `GenerateEnforcementHeader()` functions
 - `pkg/compiler/compiler.go` - Integration point for metadata embedding
 
 **Related specs:**
 - `compiler-architecture.md` - Defines where metadata embedding fits in compilation pipeline
-- All target compiler specs - Each target uses metadata blocks for rules
+- All target compiler specs - Each target uses metadata blocks for rules by calling shared functions
 
 ## Examples
 
