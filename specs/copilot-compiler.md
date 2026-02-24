@@ -79,30 +79,29 @@ applyTo: []string
 ## Algorithm
 
 1. Determine resource type (rule vs prompt)
-2. If rule:
-   - Generate path: `{collection-id}_{item-id}.instructions.md`
+2. Generate path using shared path functions
+3. If rule:
    - Generate applyTo frontmatter from rule.scope.files
-   - Generate metadata block
-   - Generate enforcement header
+   - Call `GenerateMetadataBlock(ruleset, rule)` from `internal/format/metadata.go`
+   - Call `GenerateEnforcementHeader(rule)` from `internal/format/metadata.go`
    - Concatenate: frontmatter + metadata + header + body
-3. If prompt:
-   - Generate path: `{collection-id}_{item-id}.prompt.md`
+4. If prompt:
    - Generate applyTo frontmatter from prompt.scope.files
    - Use body content only (no metadata, no header)
-4. Return CompilationResult with path and content
+5. Return CompilationResult with path and content
 
 **Pseudocode:**
 ```
 function Compile(resource):
     if resource.type == "rule":
-        path = resource.collectionID + "_" + resource.itemID + ".instructions.md"
+        path = BuildRulePath(resource.rulesetID, resource.ruleID, ".instructions.md")
         
         frontmatter = GenerateApplyToFrontmatter(resource.rule.scope.files)
-        metadata = GenerateMetadataBlock(resource)
-        header = "# " + resource.rule.name + " (" + uppercase(resource.rule.enforcement) + ")"
+        metadata = GenerateMetadataBlock(resource.ruleset, resource.rule)
+        header = GenerateEnforcementHeader(resource.rule)
         content = frontmatter + "\n" + metadata + "\n" + header + "\n\n" + resource.body
     else:
-        path = resource.collectionID + "_" + resource.itemID + ".prompt.md"
+        path = BuildPromptPath(resource.promptsetID, resource.promptID, ".prompt.md")
         
         frontmatter = GenerateApplyToFrontmatter(resource.prompt.scope.files)
         content = frontmatter + "\n" + resource.body
@@ -131,10 +130,12 @@ function Compile(resource):
 
 **Source files:**
 - `pkg/targets/copilot.go` - CopilotCompiler implementation
+- `internal/format/metadata.go` - Shared metadata generation functions
+- `internal/format/paths.go` - Shared path generation functions
 
 **Related specs:**
-- `metadata-block.md` - Metadata block structure and generation
-- `compiler-architecture.md` - TargetCompiler interface and CompilationResult
+- `metadata-block.md` - Metadata block structure and shared functions
+- `compiler-architecture.md` - TargetCompiler interface, CompilationResult, and shared path functions
 
 ## Examples
 

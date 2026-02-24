@@ -57,10 +57,10 @@ func (k *KiroCompiler) SupportedVersions() []string
 ## Algorithm
 
 1. Determine resource type (rule vs prompt)
-2. Generate path: `{collection-id}_{item-id}.md`
+2. Generate path using shared path functions
 3. If rule:
-   - Generate metadata block (ruleset + rule sections)
-   - Generate enforcement header
+   - Call `GenerateMetadataBlock(ruleset, rule)` from `internal/format/metadata.go`
+   - Call `GenerateEnforcementHeader(rule)` from `internal/format/metadata.go`
    - Concatenate: metadata + header + body
 4. If prompt:
    - Use body content only
@@ -69,13 +69,13 @@ func (k *KiroCompiler) SupportedVersions() []string
 **Pseudocode:**
 ```
 function Compile(resource):
-    path = resource.collectionID + "_" + resource.itemID + ".md"
-    
     if resource.type == "rule":
-        metadata = GenerateMetadataBlock(resource)
-        header = "# " + resource.rule.name + " (" + uppercase(resource.rule.enforcement) + ")"
+        path = BuildRulePath(resource.rulesetID, resource.ruleID, ".md")
+        metadata = GenerateMetadataBlock(resource.ruleset, resource.rule)
+        header = GenerateEnforcementHeader(resource.rule)
         content = metadata + "\n" + header + "\n\n" + resource.body
     else:
+        path = BuildPromptPath(resource.promptsetID, resource.promptID, ".md")
         content = resource.body
     
     return CompilationResult{Path: path, Content: content}
@@ -102,10 +102,12 @@ function Compile(resource):
 
 **Source files:**
 - `pkg/targets/kiro.go` - KiroCompiler implementation
+- `internal/format/metadata.go` - Shared metadata generation functions
+- `internal/format/paths.go` - Shared path generation functions
 
 **Related specs:**
-- `metadata-block.md` - Metadata block structure and generation
-- `compiler-architecture.md` - TargetCompiler interface and CompilationResult
+- `metadata-block.md` - Metadata block structure and shared functions
+- `compiler-architecture.md` - TargetCompiler interface, CompilationResult, and shared path functions
 
 ## Examples
 

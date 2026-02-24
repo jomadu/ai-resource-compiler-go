@@ -84,33 +84,32 @@ paths:
 ## Algorithm
 
 1. Determine resource type (rule vs prompt)
-2. If rule:
-   - Generate path: `{collection-id}_{item-id}.md`
+2. Generate path using shared path functions
+3. If rule:
    - If scope defined: Generate paths frontmatter
-   - Generate metadata block
-   - Generate enforcement header
+   - Call `GenerateMetadataBlock(ruleset, rule)` from `internal/format/metadata.go`
+   - Call `GenerateEnforcementHeader(rule)` from `internal/format/metadata.go`
    - Concatenate: [frontmatter +] metadata + header + body
-3. If prompt:
-   - Generate path: `{collection-id}_{item-id}/SKILL.md`
+4. If prompt:
    - Use body content only
-4. Return CompilationResult with path and content
+5. Return CompilationResult with path and content
 
 **Pseudocode:**
 ```
 function Compile(resource):
     if resource.type == "rule":
-        path = resource.collectionID + "_" + resource.itemID + ".md"
+        path = BuildRulePath(resource.rulesetID, resource.ruleID, ".md")
         
         content = ""
         if resource.rule.scope.files is not empty:
             frontmatter = GeneratePathsFrontmatter(resource.rule.scope.files)
             content += frontmatter + "\n"
         
-        metadata = GenerateMetadataBlock(resource)
-        header = "# " + resource.rule.name + " (" + uppercase(resource.rule.enforcement) + ")"
+        metadata = GenerateMetadataBlock(resource.ruleset, resource.rule)
+        header = GenerateEnforcementHeader(resource.rule)
         content += metadata + "\n" + header + "\n\n" + resource.body
     else:
-        path = resource.collectionID + "_" + resource.itemID + "/SKILL.md"
+        path = BuildClaudePromptPath(resource.promptsetID, resource.promptID)
         content = resource.body
     
     return CompilationResult{Path: path, Content: content}
@@ -137,10 +136,12 @@ function Compile(resource):
 
 **Source files:**
 - `pkg/targets/claude.go` - ClaudeCompiler implementation
+- `internal/format/metadata.go` - Shared metadata generation functions
+- `internal/format/paths.go` - Shared path generation functions
 
 **Related specs:**
-- `metadata-block.md` - Metadata block structure and generation
-- `compiler-architecture.md` - TargetCompiler interface and CompilationResult
+- `metadata-block.md` - Metadata block structure and shared functions
+- `compiler-architecture.md` - TargetCompiler interface, CompilationResult, and shared path functions
 
 ## Examples
 

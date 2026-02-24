@@ -72,7 +72,7 @@
 
 ## TASK-011
 - Priority: 3
-- Status: TODO
+- Status: DONE
 - Dependencies: [TASK-001, TASK-002]
 - Issue: #1 (Metadata Block Duplication), #2 (Path Generation Logic Scattered)
 - Description: Update all target compiler specs (kiro-compiler.md, cursor-compiler.md, claude-compiler.md, copilot-compiler.md, markdown-compiler.md) to reference shared metadata and path generation functions. Remove duplicated algorithm details and reference `internal/format/metadata.go` and `internal/format/paths.go` instead.
