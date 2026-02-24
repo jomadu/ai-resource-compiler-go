@@ -79,7 +79,7 @@
 
 ## TASK-012
 - Priority: 3
-- Status: TODO
+- Status: DONE
 - Dependencies: [TASK-001, TASK-002, TASK-003, TASK-004, TASK-005, TASK-006, TASK-007, TASK-008, TASK-009, TASK-010, TASK-011]
 - Issue: Meta-task (consolidates all spec updates)
 - Description: Update specs/README.md to reference new validation-rules.md spec in Foundation Layer section. Add validation to the reading order for understanding the system (after metadata-block.md, before compiler-architecture.md).

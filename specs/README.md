@@ -16,6 +16,7 @@ This directory contains specifications for the AI Resource Compiler. Specificati
 Shared formats and architecture that all targets depend on.
 
 - **[Metadata Embedding](metadata-block.md)** - How ruleset/rule context is embedded in compiled rule content
+- **[Validation Rules](validation-rules.md)** - Filesystem-safe ID requirements and rule name validation
 - **[Compilation Architecture](compiler-architecture.md)** - Core interfaces, data flow, and extension points
 
 ### Target Layer
@@ -54,14 +55,15 @@ All specifications follow the structure defined in [TEMPLATE.md](TEMPLATE.md):
 ### For Understanding the System
 
 1. Start with **[Metadata Embedding](metadata-block.md)** - Understand the shared format
-2. Read **[Compilation Architecture](compiler-architecture.md)** - Understand the core contracts
-3. Pick a target compiler to see how it all fits together:
+2. Read **[Validation Rules](validation-rules.md)** - Understand ID and name requirements
+3. Read **[Compilation Architecture](compiler-architecture.md)** - Understand the core contracts
+4. Pick a target compiler to see how it all fits together:
    - **[Markdown Compiler](markdown-compiler.md)** - Simplest example
    - **[Kiro Compiler](kiro-compiler.md)** - Similar to markdown
    - **[Cursor Compiler](cursor-compiler.md)** - Adds frontmatter
    - **[Claude Compiler](claude-compiler.md)** - Optional frontmatter, special prompt paths
    - **[Copilot Compiler](copilot-compiler.md)** - Frontmatter for rules and prompts
-4. Read **[CLI Design](cli-design.md)** - Understand the user interface
+5. Read **[CLI Design](cli-design.md)** - Understand the user interface
 
 ### For Implementing a Feature
 
@@ -74,11 +76,12 @@ All specifications follow the structure defined in [TEMPLATE.md](TEMPLATE.md):
 ### For Adding a New Target
 
 1. Read **[Metadata Embedding](metadata-block.md)** - Understand metadata blocks
-2. Read **[Compilation Architecture](compiler-architecture.md)** - Understand TargetCompiler interface
-3. Review existing target specs for patterns
-4. Create new spec following [TEMPLATE.md](TEMPLATE.md)
-5. Implement TargetCompiler interface
-6. Register target in compiler
+2. Read **[Validation Rules](validation-rules.md)** - Understand ID and name constraints
+3. Read **[Compilation Architecture](compiler-architecture.md)** - Understand TargetCompiler interface
+4. Review existing target specs for patterns
+5. Create new spec following [TEMPLATE.md](TEMPLATE.md)
+6. Implement TargetCompiler interface
+7. Register target in compiler
 
 ## Key Concepts
 
