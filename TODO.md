@@ -16,7 +16,7 @@
 
 ## TASK-003
 - Priority: 1
-- Status: TODO
+- Status: DONE
 - Dependencies: []
 - Issue: #3 (No Validation of Resource IDs for Filesystem Safety)
 - Description: Create validation-rules.md spec in specs/ directory. Define filesystem-safe ID requirements (allowed characters: a-z, A-Z, 0-9, -, _). Document `ValidateResourceIDs(resource)` function that checks collection and item IDs. Include edge cases for invalid characters (/, \, :, *, ?, ", <, >, |) and error message format.
