@@ -9,7 +9,7 @@
 
 ## TASK-002
 - Priority: 1
-- Status: TODO
+- Status: DONE
 - Dependencies: []
 - Issue: #2 (Path Generation Logic Scattered Across Targets)
 - Description: Add centralized path generation functions to compiler-architecture.md spec. Document `BuildRulePath(rulesetID, ruleID, extension)`, `BuildPromptPath(promptsetID, promptID, extension)`, and `BuildClaudePromptPath(promptsetID, promptID)` in the Implementation Mapping section. Specify these live in `internal/format/paths.go`.

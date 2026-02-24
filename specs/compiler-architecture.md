@@ -93,6 +93,93 @@ func (c *Compiler) Compile(resource Resource, opts CompileOptions) ([]Compilatio
 - `RegisterTarget()` - Adds or replaces target compiler
 - `Compile()` - Compiles resource for all requested targets
 
+## Shared Functions
+
+Target compilers use these shared functions to generate consistent file paths.
+
+### BuildRulePath
+
+```go
+func BuildRulePath(rulesetID, ruleID, extension string) string
+```
+
+**Parameters:**
+- `rulesetID` - Ruleset collection identifier
+- `ruleID` - Rule item identifier
+- `extension` - File extension (e.g., ".md", ".mdc", ".instructions.md")
+
+**Returns:**
+- File path string in format `{rulesetID}_{ruleID}{extension}`
+
+**Algorithm:**
+1. Concatenate rulesetID + "_" + ruleID
+2. Append extension
+3. Return formatted path
+
+**Example:**
+```go
+path := BuildRulePath("cleanCode", "meaningfulNames", ".md")
+// Returns: "cleanCode_meaningfulNames.md"
+
+path := BuildRulePath("security", "noSecrets", ".mdc")
+// Returns: "security_noSecrets.mdc"
+```
+
+### BuildPromptPath
+
+```go
+func BuildPromptPath(promptsetID, promptID, extension string) string
+```
+
+**Parameters:**
+- `promptsetID` - Promptset collection identifier
+- `promptID` - Prompt item identifier
+- `extension` - File extension (e.g., ".md", ".prompt.md")
+
+**Returns:**
+- File path string in format `{promptsetID}_{promptID}{extension}`
+
+**Algorithm:**
+1. Concatenate promptsetID + "_" + promptID
+2. Append extension
+3. Return formatted path
+
+**Example:**
+```go
+path := BuildPromptPath("codeReview", "reviewPR", ".md")
+// Returns: "codeReview_reviewPR.md"
+
+path := BuildPromptPath("refactoring", "extractFunction", ".prompt.md")
+// Returns: "refactoring_extractFunction.prompt.md"
+```
+
+### BuildClaudePromptPath
+
+```go
+func BuildClaudePromptPath(promptsetID, promptID string) string
+```
+
+**Parameters:**
+- `promptsetID` - Promptset collection identifier
+- `promptID` - Prompt item identifier
+
+**Returns:**
+- Directory path string in format `{promptsetID}_{promptID}/SKILL.md`
+
+**Algorithm:**
+1. Concatenate promptsetID + "_" + promptID
+2. Append "/SKILL.md"
+3. Return formatted path
+
+**Example:**
+```go
+path := BuildClaudePromptPath("codeReview", "reviewPR")
+// Returns: "codeReview_reviewPR/SKILL.md"
+
+path := BuildClaudePromptPath("debugging", "findBug")
+// Returns: "debugging_findBug/SKILL.md"
+```
+
 ## Algorithm
 
 ### Compilation Pipeline
@@ -124,15 +211,20 @@ function Compile(resource, opts):
 
 ### Path Generation
 
+Target compilers use shared path generation functions to ensure consistency.
+
 **Rules:**
+- Use `BuildRulePath(rulesetID, ruleID, extension)`
 - Pattern: `{collection-id}_{item-id}.{ext}`
 - Example: `cleanCode_meaningfulNames.mdc`
 
 **Prompts (most targets):**
+- Use `BuildPromptPath(promptsetID, promptID, extension)`
 - Pattern: `{collection-id}_{item-id}.{ext}`
 - Example: `codeReview_reviewPR.md`
 
 **Claude Prompts (special case):**
+- Use `BuildClaudePromptPath(promptsetID, promptID)`
 - Pattern: `{collection-id}_{item-id}/SKILL.md`
 - Example: `codeReview_reviewPR/SKILL.md`
 
@@ -215,6 +307,7 @@ func (c *CursorCompiler) Compile(resource Resource) ([]CompilationResult, error)
   - **Note:** Resource includes `APIVersion` field for version detection
 - Target-specific compilers (implement TargetCompiler interface)
 - Metadata block generation (from metadata-block.md spec)
+- Path generation functions (shared across all target compilers)
 
 ## Implementation Mapping
 
@@ -227,6 +320,7 @@ func (c *CursorCompiler) Compile(resource Resource) ([]CompilationResult, error)
 - `pkg/targets/claude.go` - Claude target compiler
 - `pkg/targets/copilot.go` - Copilot target compiler
 - `pkg/targets/markdown.go` - Markdown target compiler
+- `internal/format/paths.go` - Implements `BuildRulePath()`, `BuildPromptPath()`, and `BuildClaudePromptPath()` functions
 
 **Related specs:**
 - `metadata-block.md` - Metadata embedding used by all target compilers
