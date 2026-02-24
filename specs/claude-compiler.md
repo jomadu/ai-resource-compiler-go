@@ -28,11 +28,13 @@ type ClaudeCompiler struct{}
 
 func (c *ClaudeCompiler) Name() string
 func (c *ClaudeCompiler) Compile(resource Resource) ([]CompilationResult, error)
+func (c *ClaudeCompiler) SupportedVersions() []string
 ```
 
 **Methods:**
 - `Name()` - Returns "claude"
 - `Compile()` - Transforms resource into Claude format
+- `SupportedVersions()` - Returns `["ai-resource/v1"]`
 
 ### Paths Frontmatter (Rules Only, Optional)
 ```yaml

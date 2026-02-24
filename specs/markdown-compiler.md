@@ -26,11 +26,13 @@ type MarkdownCompiler struct{}
 
 func (m *MarkdownCompiler) Name() string
 func (m *MarkdownCompiler) Compile(resource Resource) ([]CompilationResult, error)
+func (m *MarkdownCompiler) SupportedVersions() []string
 ```
 
 **Methods:**
 - `Name()` - Returns "markdown"
 - `Compile()` - Transforms resource into markdown format
+- `SupportedVersions()` - Returns `["ai-resource/v1"]`
 
 ### Output Structure
 

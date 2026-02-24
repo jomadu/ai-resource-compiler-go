@@ -44,7 +44,7 @@
 
 ## TASK-007
 - Priority: 2
-- Status: TODO
+- Status: DONE
 - Dependencies: [TASK-006]
 - Issue: #4 (Version Handling Strategy Incomplete)
 - Description: Update all target compiler specs (kiro-compiler.md, cursor-compiler.md, claude-compiler.md, copilot-compiler.md, markdown-compiler.md) to include `SupportedVersions()` method in their compiler struct definitions. Document which versions each target supports (start with ["ai-resource/v1"]).

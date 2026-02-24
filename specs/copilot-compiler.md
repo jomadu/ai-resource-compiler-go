@@ -30,11 +30,13 @@ type CopilotCompiler struct{}
 
 func (c *CopilotCompiler) Name() string
 func (c *CopilotCompiler) Compile(resource Resource) ([]CompilationResult, error)
+func (c *CopilotCompiler) SupportedVersions() []string
 ```
 
 **Methods:**
 - `Name()` - Returns "copilot"
 - `Compile()` - Transforms resource into Copilot format
+- `SupportedVersions()` - Returns `["ai-resource/v1"]`
 
 ### ApplyTo Frontmatter (Rules and Prompts)
 ```yaml

@@ -28,11 +28,13 @@ type KiroCompiler struct{}
 
 func (k *KiroCompiler) Name() string
 func (k *KiroCompiler) Compile(resource Resource) ([]CompilationResult, error)
+func (k *KiroCompiler) SupportedVersions() []string
 ```
 
 **Methods:**
 - `Name()` - Returns "kiro"
 - `Compile()` - Transforms resource into Kiro format
+- `SupportedVersions()` - Returns `["ai-resource/v1"]`
 
 ### Output Structure
 

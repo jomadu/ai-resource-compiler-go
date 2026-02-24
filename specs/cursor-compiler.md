@@ -29,11 +29,13 @@ type CursorCompiler struct{}
 
 func (c *CursorCompiler) Name() string
 func (c *CursorCompiler) Compile(resource Resource) ([]CompilationResult, error)
+func (c *CursorCompiler) SupportedVersions() []string
 ```
 
 **Methods:**
 - `Name()` - Returns "cursor"
 - `Compile()` - Transforms resource into Cursor format
+- `SupportedVersions()` - Returns `["ai-resource/v1"]`
 
 ### MDC Frontmatter (Rules Only)
 ```yaml
