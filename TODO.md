@@ -37,7 +37,7 @@
 
 ## TASK-006
 - Priority: 2
-- Status: TODO
+- Status: DONE
 - Dependencies: []
 - Issue: #4 (Version Handling Strategy Incomplete)
 - Description: Add `SupportedVersions() []string` method to TargetCompiler interface in compiler-architecture.md spec. Update interface definition in Data Structures section and add version compatibility check to compilation pipeline algorithm (step 1.5: "Check target supports resource.APIVersion").

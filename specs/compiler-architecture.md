@@ -69,12 +69,14 @@ type CompilationResult struct {
 ```go
 type TargetCompiler interface {
     Name() string
+    SupportedVersions() []string
     Compile(resource Resource) ([]CompilationResult, error)
 }
 ```
 
 **Methods:**
 - `Name()` - Returns target identifier (matches Target enum value)
+- `SupportedVersions()` - Returns list of supported API versions (e.g., ["ai-resource/v1"])
 - `Compile()` - Transforms resource into target-specific format(s)
 
 ### Compiler
@@ -188,6 +190,7 @@ path := BuildClaudePromptPath("debugging", "findBug")
 2. Validate CompileOptions (non-empty targets list)
 3. For each requested target:
    - Look up registered TargetCompiler
+   - Check target supports resource.APIVersion
    - Call compiler.Compile(resource)
    - Collect CompilationResults
 4. Return aggregated results from all targets
@@ -213,6 +216,11 @@ function Compile(resource, opts):
         compiler = lookupCompiler(target)
         if compiler is nil:
             return error("unknown target: " + target)
+        
+        // Step 3.5: Check version compatibility
+        supportedVersions = compiler.SupportedVersions()
+        if resource.APIVersion not in supportedVersions:
+            return error("target " + target + " does not support apiVersion: " + resource.APIVersion)
         
         targetResults = compiler.Compile(resource)
         results.append(targetResults)
@@ -307,11 +315,11 @@ func (c *CursorCompiler) Compile(resource Resource) ([]CompilationResult, error)
 |-----------|-------------------|
 | Empty targets list | Return error "no targets specified" |
 | Unknown target | Return error "unknown target: {name}" |
+| Unsupported apiVersion | Return error "target {name} does not support apiVersion: {version}" |
 | Target compiler returns empty results | Include empty array in aggregated results |
 | Target compiler returns error | Propagate error, stop compilation |
 | Multiple targets requested | Compile independently, aggregate results |
 | Resource with special characters in ID | Sanitize IDs for filesystem safety |
-| Unsupported apiVersion | Return error "unsupported apiVersion: {version} for {target}" |
 
 ## Dependencies
 
