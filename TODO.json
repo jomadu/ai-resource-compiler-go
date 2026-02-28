@@ -105,7 +105,7 @@
     {
       "id": "TASK-006",
       "priority": 3,
-      "status": "TODO",
+      "status": "DONE",
       "dependencies": [
         "TASK-001",
         "TASK-002",
@@ -118,7 +118,8 @@
         "Delete PLAN.md - working document no longer needed",
         "Delete specs/UPDATES.md - working document no longer needed",
         "Only execute after all spec updates verified complete",
-        "Acceptance: Both files removed, all specs updated and consistent"
+        "Acceptance: Both files removed, all specs updated and consistent",
+        "Completed: Deleted PLAN.md and specs/UPDATES.md. All spec updates complete."
       ]
     }
   ]

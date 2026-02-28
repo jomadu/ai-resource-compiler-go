@@ -25,14 +25,16 @@ Generate vanilla markdown output for AI resources that can be used with any tool
 type MarkdownCompiler struct{}
 
 func (m *MarkdownCompiler) Name() string
-func (m *MarkdownCompiler) Compile(resource Resource) ([]CompilationResult, error)
 func (m *MarkdownCompiler) SupportedVersions() []string
+func (m *MarkdownCompiler) Compile(resource *airesource.Resource) ([]CompilationResult, error)
 ```
 
 **Methods:**
 - `Name()` - Returns "markdown"
+- `SupportedVersions()` - Returns `["ai-resource/draft"]`
 - `Compile()` - Transforms resource into markdown format
-- `SupportedVersions()` - Returns `["ai-resource/v1"]`
+  - Handles Rule, Ruleset, Prompt, Promptset kinds
+  - Returns one result per rule/prompt
 
 ### Output Structure
 
@@ -54,27 +56,85 @@ func (m *MarkdownCompiler) SupportedVersions() []string
 
 ## Algorithm
 
-1. Determine resource type (rule vs prompt)
-2. Generate path using shared path functions
-3. If rule:
-   - Call `GenerateMetadataBlock(ruleset, rule)` from `internal/format/metadata.go`
-   - Call `GenerateEnforcementHeader(rule)` from `internal/format/metadata.go`
-   - Concatenate: metadata + header + body
-4. If prompt:
-   - Use body content only
-5. Return CompilationResult with path and content
+1. Check resource kind (Rule, Ruleset, Prompt, Promptset)
+2. Expand collections into individual items
+3. For each item:
+   - Resolve body using `airesource.ResolveBody(body, fragments)`
+   - Validate IDs using `ValidateID()`
+   - For rules: validate name using `ValidateRuleName()`
+   - Generate path using shared path functions
+   - Generate content (metadata + header + body for rules, body only for prompts)
+4. Return array of CompilationResults
 
 **Pseudocode:**
 ```
 function Compile(resource):
-    if resource.type == "rule":
-        path = BuildRulePath(resource.rulesetID, resource.ruleID, ".md")
-        metadata = GenerateMetadataBlock(resource.ruleset, resource.rule)
-        header = GenerateEnforcementHeader(resource.rule)
-        content = metadata + "\n" + header + "\n\n" + resource.body
-    else:
-        path = BuildPromptPath(resource.promptsetID, resource.promptID, ".md")
-        content = resource.body
+    results = []
+    
+    switch resource.Kind:
+    case "Rule":
+        rule = resource.AsRule()
+        result = compileRule(rule.Metadata, rule.Metadata.ID, rule.Spec, rule.Spec.Fragments)
+        results.append(result)
+    
+    case "Ruleset":
+        ruleset = resource.AsRuleset()
+        for ruleID, ruleItem in ruleset.Spec.Rules:
+            result = compileRule(ruleset.Metadata, ruleID, ruleItem, ruleset.Spec.Fragments)
+            results.append(result)
+    
+    case "Prompt":
+        prompt = resource.AsPrompt()
+        result = compilePrompt(prompt.Metadata, prompt.Metadata.ID, prompt.Spec, prompt.Spec.Fragments)
+        results.append(result)
+    
+    case "Promptset":
+        promptset = resource.AsPromptset()
+        for promptID, promptItem in promptset.Spec.Prompts:
+            result = compilePrompt(promptset.Metadata, promptID, promptItem, promptset.Spec.Fragments)
+            results.append(result)
+    
+    return results
+
+function compileRule(metadata, ruleID, ruleSpec, fragments):
+    // Resolve body
+    resolvedBody = airesource.ResolveBody(ruleSpec.Body, fragments)
+    
+    // Validate
+    ValidateID(metadata.ID)
+    ValidateID(ruleID)
+    ValidateRuleName(ruleSpec.Name)
+    
+    // Generate path
+    if resource.Kind == "Ruleset":
+        path = BuildCollectionPath(metadata.ID, ruleID, ".md")
+    else:  // resource.Kind == "Rule"
+        path = BuildStandalonePath(metadata.ID, ".md")
+    
+    // Generate complete content
+    if resource.Kind == "Ruleset":
+        content = GenerateRuleMetadataBlockFromRuleset(resource, ruleID)
+    else:  // resource.Kind == "Rule"
+        content = GenerateRuleMetadataBlockFromRule(resource)
+    
+    return CompilationResult{Path: path, Content: content}
+
+function compilePrompt(metadata, promptID, promptSpec, fragments):
+    // Resolve body
+    resolvedBody = airesource.ResolveBody(promptSpec.Body, fragments)
+    
+    // Validate
+    ValidateID(metadata.ID)
+    ValidateID(promptID)
+    
+    // Generate path
+    if resource.Kind == "Promptset":
+        path = BuildCollectionPath(metadata.ID, promptID, ".md")
+    else:  // resource.Kind == "Prompt"
+        path = BuildStandalonePath(metadata.ID, ".md")
+    
+    // Use body only
+    content = resolvedBody
     
     return CompilationResult{Path: path, Content: content}
 ```
