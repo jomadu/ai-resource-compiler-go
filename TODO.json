@@ -293,12 +293,14 @@
     {
       "id": "TASK-023",
       "priority": 3,
-      "status": "TODO",
+      "status": "DONE",
       "dependencies": [
         "TASK-017"
       ],
       "description": "Write CLI integration tests in cmd/arc/arc_test.go - Test stdout/file output modes, multiple targets, error cases, flag parsing. See PLAN.md Task 4.6",
-      "comments": []
+      "comments": [
+        "Completed: Created cmd/arc/arc_test.go with integration tests. Tests cover stdout mode (single/multiple targets), file mode (single/multiple targets, --flat flag), error cases (missing file, invalid YAML, unknown target). Added Resource.UnmarshalYAML() to pkg/compiler/interface.go for proper YAML parsing. Added blank import of pkg/targets in compile.go to register compilers. All tests pass. go test ./... and go vet ./... succeed."
+      ]
     }
   ]
 }

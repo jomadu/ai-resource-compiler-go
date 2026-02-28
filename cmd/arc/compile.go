@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/jomadu/ai-resource-compiler-go/pkg/compiler"
+	_ "github.com/jomadu/ai-resource-compiler-go/pkg/targets" // Register built-in targets
 	"gopkg.in/yaml.v3"
 )
 
