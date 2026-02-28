@@ -229,12 +229,14 @@
     {
       "id": "TASK-018",
       "priority": 3,
-      "status": "TODO",
+      "status": "DONE",
       "dependencies": [
         "TASK-004"
       ],
       "description": "Write unit tests for path generation in internal/format/paths_test.go - Test all 4 path functions with examples from spec. See PLAN.md Task 4.1",
-      "comments": []
+      "comments": [
+        "Completed: Created internal/format/paths_test.go with tests for all 4 path functions (BuildCollectionPath, BuildStandalonePath, BuildClaudeCollectionPath, BuildClaudeStandalonePath). All tests pass."
+      ]
     },
     {
       "id": "TASK-019",
