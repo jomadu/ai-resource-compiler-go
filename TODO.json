@@ -253,12 +253,14 @@
     {
       "id": "TASK-020",
       "priority": 3,
-      "status": "TODO",
+      "status": "DONE",
       "dependencies": [
         "TASK-007"
       ],
       "description": "Write unit tests for metadata generation in internal/format/metadata_test.go - Test both functions with full/minimal metadata, verify YAML structure and enforcement headers. See PLAN.md Task 4.3",
-      "comments": []
+      "comments": [
+        "Completed: Created internal/format/metadata_test.go with tests for GenerateRuleMetadataBlockFromRuleset() and GenerateRuleMetadataBlockFromRule(). Tests cover full and minimal metadata cases, verify YAML structure and enforcement headers. All tests pass."
+      ]
     },
     {
       "id": "TASK-021",
