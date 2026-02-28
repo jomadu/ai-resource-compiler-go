@@ -204,12 +204,14 @@
     {
       "id": "TASK-016",
       "priority": 3,
-      "status": "TODO",
+      "status": "DONE",
       "dependencies": [
         "TASK-014"
       ],
       "description": "Implement output handlers in cmd/arc/output.go - outputStdout() with separators, outputFiles() with directory creation and --flat support. See PLAN.md Task 3.3, specs/cli-design.md Output Modes",
-      "comments": []
+      "comments": [
+        "Completed: Created cmd/arc/output.go with outputStdout() and outputFiles(). Modified compile.go to compile each target separately for proper target tracking. outputStdout() prints target/path separator. outputFiles() creates directories with os.MkdirAll, supports --flat flag, reports to stderr. go build ./... and go vet ./... succeed."
+      ]
     },
     {
       "id": "TASK-017",
