@@ -61,13 +61,15 @@
     {
       "id": "TASK-006",
       "priority": 1,
-      "status": "TODO",
+      "status": "DONE",
       "dependencies": [
         "TASK-002",
         "TASK-003"
       ],
       "description": "Implement core compiler pipeline in pkg/compiler/compiler.go - Compiler struct, NewCompiler(), RegisterTarget(), Compile() with validation and orchestration. See PLAN.md Task 1.6, AUDIT.md #2, specs/compiler-architecture.md Algorithm",
-      "comments": []
+      "comments": [
+        "Completed: Created pkg/compiler/compiler.go with Compiler struct, NewCompiler(), RegisterTarget(), and Compile() method. Implements full validation and orchestration per spec. go build ./... and go vet ./... succeed."
+      ]
     },
     {
       "id": "TASK-007",
