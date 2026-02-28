@@ -28,14 +28,16 @@ Generate Cursor IDE rules (.mdc) and commands (.md) in the format expected by Cu
 type CursorCompiler struct{}
 
 func (c *CursorCompiler) Name() string
-func (c *CursorCompiler) Compile(resource Resource) ([]CompilationResult, error)
 func (c *CursorCompiler) SupportedVersions() []string
+func (c *CursorCompiler) Compile(resource *airesource.Resource) ([]CompilationResult, error)
 ```
 
 **Methods:**
 - `Name()` - Returns "cursor"
+- `SupportedVersions()` - Returns `["ai-resource/draft"]`
 - `Compile()` - Transforms resource into Cursor format
-- `SupportedVersions()` - Returns `["ai-resource/v1"]`
+  - Handles Rule, Ruleset, Prompt, Promptset kinds
+  - Returns one result per rule/prompt
 
 ### MDC Frontmatter (Rules Only)
 ```yaml
@@ -47,9 +49,20 @@ alwaysApply: bool        # true for must enforcement
 ```
 
 **Fields:**
-- `description` - Rule description (from rule.description or rule.name)
-- `globs` - File patterns from rule.scope.files (empty array if no scope)
+- `description` - Rule description (from RuleItem.Description or RuleItem.Name)
+- `globs` - File patterns extracted from Scope []ScopeEntry (empty array if no scope)
 - `alwaysApply` - true if enforcement is "must", false otherwise
+
+**Scope Extraction:**
+```go
+func extractScopeFiles(scope []airesource.ScopeEntry) []string {
+    var files []string
+    for _, entry := range scope {
+        files = append(files, entry.Files...)
+    }
+    return files
+}
+```
 
 ### Output Structure
 
@@ -77,30 +90,96 @@ alwaysApply: bool
 
 ## Algorithm
 
-1. Determine resource type (rule vs prompt)
-2. Generate path using shared path functions
-3. If rule:
-   - Generate MDC frontmatter from rule metadata
-   - Call `GenerateMetadataBlock(ruleset, rule)` from `internal/format/metadata.go`
-   - Call `GenerateEnforcementHeader(rule)` from `internal/format/metadata.go`
-   - Concatenate: frontmatter + metadata + header + body
-4. If prompt:
-   - Use body content only
-5. Return CompilationResult with path and content
+1. Check resource kind (Rule, Ruleset, Prompt, Promptset)
+2. Expand collections into individual items
+3. For each item:
+   - Resolve body using `airesource.ResolveBody(body, fragments)`
+   - Validate IDs using `ValidateID()`
+   - For rules: validate name using `ValidateRuleName()`
+   - Extract scope files from `[]ScopeEntry` using `extractScopeFiles()`
+   - Generate MDC frontmatter (rules only)
+   - Generate path using shared path functions
+   - Generate content (frontmatter + metadata + header + body for rules, body only for prompts)
+4. Return array of CompilationResults
 
 **Pseudocode:**
 ```
 function Compile(resource):
-    if resource.type == "rule":
-        path = BuildRulePath(resource.rulesetID, resource.ruleID, ".mdc")
-        
-        frontmatter = GenerateMDCFrontmatter(resource.rule)
-        metadata = GenerateMetadataBlock(resource.ruleset, resource.rule)
-        header = GenerateEnforcementHeader(resource.rule)
-        content = frontmatter + "\n" + metadata + "\n" + header + "\n\n" + resource.body
-    else:
-        path = BuildPromptPath(resource.promptsetID, resource.promptID, ".md")
-        content = resource.body
+    results = []
+    
+    switch resource.Kind:
+    case "Rule":
+        rule = resource.AsRule()
+        result = compileRule(rule.Metadata, rule.Metadata.ID, rule.Spec, rule.Spec.Fragments)
+        results.append(result)
+    
+    case "Ruleset":
+        ruleset = resource.AsRuleset()
+        for ruleID, ruleItem in ruleset.Spec.Rules:
+            result = compileRule(ruleset.Metadata, ruleID, ruleItem, ruleset.Spec.Fragments)
+            results.append(result)
+    
+    case "Prompt":
+        prompt = resource.AsPrompt()
+        result = compilePrompt(prompt.Metadata, prompt.Metadata.ID, prompt.Spec, prompt.Spec.Fragments)
+        results.append(result)
+    
+    case "Promptset":
+        promptset = resource.AsPromptset()
+        for promptID, promptItem in promptset.Spec.Prompts:
+            result = compilePrompt(promptset.Metadata, promptID, promptItem, promptset.Spec.Fragments)
+            results.append(result)
+    
+    return results
+
+function compileRule(metadata, ruleID, ruleSpec, fragments):
+    // Resolve body
+    resolvedBody = airesource.ResolveBody(ruleSpec.Body, fragments)
+    
+    // Validate
+    ValidateID(metadata.ID)
+    ValidateID(ruleID)
+    ValidateRuleName(ruleSpec.Name)
+    
+    // Extract scope files
+    scopeFiles = extractScopeFiles(ruleSpec.Scope)
+    
+    // Generate MDC frontmatter
+    frontmatter = GenerateMDCFrontmatter(ruleSpec, scopeFiles)
+    
+    // Generate path
+    if resource.Kind == "Ruleset":
+        path = BuildCollectionPath(metadata.ID, ruleID, ".mdc")
+    else:  // resource.Kind == "Rule"
+        path = BuildStandalonePath(metadata.ID, ".mdc")
+    
+    // Generate complete content
+    if resource.Kind == "Ruleset":
+        content = GenerateRuleMetadataBlockFromRuleset(resource, ruleID)
+    else:  // resource.Kind == "Rule"
+        content = GenerateRuleMetadataBlockFromRule(resource)
+    
+    // Prepend frontmatter
+    content = frontmatter + "\n" + content
+    
+    return CompilationResult{Path: path, Content: content}
+
+function compilePrompt(metadata, promptID, promptSpec, fragments):
+    // Resolve body
+    resolvedBody = airesource.ResolveBody(promptSpec.Body, fragments)
+    
+    // Validate
+    ValidateID(metadata.ID)
+    ValidateID(promptID)
+    
+    // Generate path
+    if resource.Kind == "Promptset":
+        path = BuildCollectionPath(metadata.ID, promptID, ".md")
+    else:  // resource.Kind == "Prompt"
+        path = BuildStandalonePath(metadata.ID, ".md")
+    
+    // Use body only
+    content = resolvedBody
     
     return CompilationResult{Path: path, Content: content}
 ```
@@ -109,13 +188,15 @@ function Compile(resource):
 
 | Condition | Expected Behavior |
 |-----------|-------------------|
-| Rule without description | Use rule.name as description |
+| Rule without description | Use RuleItem.Name as description |
 | Rule without scope | Set globs to empty array [] |
 | Rule with "should" or "may" | Set alwaysApply to false |
 | Rule with "must" | Set alwaysApply to true |
 | Prompt resource | Return body only, no frontmatter or metadata |
 | Empty body | Return frontmatter + metadata + header with empty body |
 | Unsupported apiVersion | Return error "unsupported apiVersion: {version} for cursor" |
+| Ruleset with multiple rules | Return one CompilationResult per rule |
+| Promptset with multiple prompts | Return one CompilationResult per prompt |
 
 ## Dependencies
 

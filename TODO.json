@@ -21,7 +21,7 @@
     {
       "id": "TASK-002",
       "priority": 1,
-      "status": "TODO",
+      "status": "DONE",
       "dependencies": [],
       "description": "Update cursor-compiler.md spec to match markdown-compiler.md pattern with MDC frontmatter",
       "comments": [
@@ -34,13 +34,14 @@
         "Add compilePrompt() showing body only (no frontmatter)",
         "Update examples: Show frontmatter with scope extraction, Ruleset expansion",
         "Verify .mdc extension for rules, .md for prompts",
-        "Acceptance: Shows MDC frontmatter generation, scope extraction from []ScopeEntry"
+        "Acceptance: Shows MDC frontmatter generation, scope extraction from []ScopeEntry",
+        "Completed: Updated interface, algorithm with switch/case, scope extraction, edge cases"
       ]
     },
     {
       "id": "TASK-003",
       "priority": 1,
-      "status": "TODO",
+      "status": "DONE",
       "dependencies": [],
       "description": "Update claude-compiler.md spec to match markdown-compiler.md pattern with paths frontmatter and SKILL.md structure",
       "comments": [
@@ -55,13 +56,14 @@
         "Add compilePrompt() showing body only in SKILL.md file",
         "Update examples: Show directory structure for prompts, optional frontmatter",
         "Verify .md extension for rules, /SKILL.md for prompts",
-        "Acceptance: Shows optional frontmatter, special SKILL.md paths, scope extraction"
+        "Acceptance: Shows optional frontmatter, special SKILL.md paths, scope extraction",
+        "Completed: Updated interface, algorithm with switch/case, scope extraction, edge cases"
       ]
     },
     {
       "id": "TASK-004",
       "priority": 1,
-      "status": "TODO",
+      "status": "DONE",
       "dependencies": [],
       "description": "Update copilot-compiler.md spec to match markdown-compiler.md pattern with applyTo frontmatter for both rules and prompts",
       "comments": [
@@ -75,7 +77,8 @@
         "Add compilePrompt() showing applyTo frontmatter + body (no metadata, no header)",
         "Update examples: Show frontmatter on both rules and prompts, scope extraction",
         "Verify .instructions.md extension for rules, .prompt.md for prompts",
-        "Acceptance: Shows applyTo on both types, scope extraction, handles missing scope"
+        "Acceptance: Shows applyTo on both types, scope extraction, handles missing scope",
+        "Completed: Updated interface, algorithm with switch/case, scope extraction, edge cases"
       ]
     },
     {

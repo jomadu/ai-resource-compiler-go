@@ -27,14 +27,16 @@ Generate Claude Code rules and skills in the format expected by Claude's context
 type ClaudeCompiler struct{}
 
 func (c *ClaudeCompiler) Name() string
-func (c *ClaudeCompiler) Compile(resource Resource) ([]CompilationResult, error)
 func (c *ClaudeCompiler) SupportedVersions() []string
+func (c *ClaudeCompiler) Compile(resource *airesource.Resource) ([]CompilationResult, error)
 ```
 
 **Methods:**
 - `Name()` - Returns "claude"
+- `SupportedVersions()` - Returns `["ai-resource/draft"]`
 - `Compile()` - Transforms resource into Claude format
-- `SupportedVersions()` - Returns `["ai-resource/v1"]`
+  - Handles Rule, Ruleset, Prompt, Promptset kinds
+  - Returns one result per rule/prompt
 
 ### Paths Frontmatter (Rules Only, Optional)
 ```yaml
@@ -45,7 +47,18 @@ paths:
 ```
 
 **Fields:**
-- `paths` - File patterns from rule.scope.files (omit frontmatter if no scope)
+- `paths` - File patterns extracted from Scope []ScopeEntry (omit frontmatter if no scope)
+
+**Scope Extraction:**
+```go
+func extractScopeFiles(scope []airesource.ScopeEntry) []string {
+    var files []string
+    for _, entry := range scope {
+        files = append(files, entry.Files...)
+    }
+    return files
+}
+```
 
 ### Output Structure
 
@@ -83,34 +96,95 @@ paths:
 
 ## Algorithm
 
-1. Determine resource type (rule vs prompt)
-2. Generate path using shared path functions
-3. If rule:
-   - If scope defined: Generate paths frontmatter
-   - Call `GenerateMetadataBlock(ruleset, rule)` from `internal/format/metadata.go`
-   - Call `GenerateEnforcementHeader(rule)` from `internal/format/metadata.go`
-   - Concatenate: [frontmatter +] metadata + header + body
-4. If prompt:
-   - Use body content only
-5. Return CompilationResult with path and content
+1. Check resource kind (Rule, Ruleset, Prompt, Promptset)
+2. Expand collections into individual items
+3. For each item:
+   - Resolve body using `airesource.ResolveBody(body, fragments)`
+   - Validate IDs using `ValidateID()`
+   - For rules: validate name using `ValidateRuleName()`
+   - Extract scope files from `[]ScopeEntry` using `extractScopeFiles()`
+   - Generate optional paths frontmatter (rules only, if scope defined)
+   - Generate path using shared path functions
+   - Generate content (optional frontmatter + metadata + header + body for rules, body only for prompts)
+4. Return array of CompilationResults
 
 **Pseudocode:**
 ```
 function Compile(resource):
-    if resource.type == "rule":
-        path = BuildRulePath(resource.rulesetID, resource.ruleID, ".md")
-        
-        content = ""
-        if resource.rule.scope.files is not empty:
-            frontmatter = GeneratePathsFrontmatter(resource.rule.scope.files)
-            content += frontmatter + "\n"
-        
-        metadata = GenerateMetadataBlock(resource.ruleset, resource.rule)
-        header = GenerateEnforcementHeader(resource.rule)
-        content += metadata + "\n" + header + "\n\n" + resource.body
-    else:
-        path = BuildClaudePromptPath(resource.promptsetID, resource.promptID)
-        content = resource.body
+    results = []
+    
+    switch resource.Kind:
+    case "Rule":
+        rule = resource.AsRule()
+        result = compileRule(rule.Metadata, rule.Metadata.ID, rule.Spec, rule.Spec.Fragments)
+        results.append(result)
+    
+    case "Ruleset":
+        ruleset = resource.AsRuleset()
+        for ruleID, ruleItem in ruleset.Spec.Rules:
+            result = compileRule(ruleset.Metadata, ruleID, ruleItem, ruleset.Spec.Fragments)
+            results.append(result)
+    
+    case "Prompt":
+        prompt = resource.AsPrompt()
+        result = compilePrompt(prompt.Metadata, prompt.Metadata.ID, prompt.Spec, prompt.Spec.Fragments)
+        results.append(result)
+    
+    case "Promptset":
+        promptset = resource.AsPromptset()
+        for promptID, promptItem in promptset.Spec.Prompts:
+            result = compilePrompt(promptset.Metadata, promptID, promptItem, promptset.Spec.Fragments)
+            results.append(result)
+    
+    return results
+
+function compileRule(metadata, ruleID, ruleSpec, fragments):
+    // Resolve body
+    resolvedBody = airesource.ResolveBody(ruleSpec.Body, fragments)
+    
+    // Validate
+    ValidateID(metadata.ID)
+    ValidateID(ruleID)
+    ValidateRuleName(ruleSpec.Name)
+    
+    // Extract scope files
+    scopeFiles = extractScopeFiles(ruleSpec.Scope)
+    
+    // Generate path
+    if resource.Kind == "Ruleset":
+        path = BuildCollectionPath(metadata.ID, ruleID, ".md")
+    else:  // resource.Kind == "Rule"
+        path = BuildStandalonePath(metadata.ID, ".md")
+    
+    // Generate complete content
+    if resource.Kind == "Ruleset":
+        content = GenerateRuleMetadataBlockFromRuleset(resource, ruleID)
+    else:  // resource.Kind == "Rule"
+        content = GenerateRuleMetadataBlockFromRule(resource)
+    
+    // Prepend optional paths frontmatter
+    if len(scopeFiles) > 0:
+        frontmatter = GeneratePathsFrontmatter(scopeFiles)
+        content = frontmatter + "\n" + content
+    
+    return CompilationResult{Path: path, Content: content}
+
+function compilePrompt(metadata, promptID, promptSpec, fragments):
+    // Resolve body
+    resolvedBody = airesource.ResolveBody(promptSpec.Body, fragments)
+    
+    // Validate
+    ValidateID(metadata.ID)
+    ValidateID(promptID)
+    
+    // Generate path (special SKILL.md structure)
+    if resource.Kind == "Promptset":
+        path = BuildClaudeCollectionPath(metadata.ID, promptID)
+    else:  // resource.Kind == "Prompt"
+        path = BuildClaudeStandalonePath(metadata.ID)
+    
+    // Use body only
+    content = resolvedBody
     
     return CompilationResult{Path: path, Content: content}
 ```
@@ -125,6 +199,8 @@ function Compile(resource):
 | Empty body | Return [frontmatter +] metadata + header with empty body |
 | Special characters in IDs | Use IDs as-is in path (sanitization handled by caller) |
 | Unsupported apiVersion | Return error "unsupported apiVersion: {version} for claude" |
+| Ruleset with multiple rules | Return one CompilationResult per rule |
+| Promptset with multiple prompts | Return one CompilationResult per prompt |
 
 ## Dependencies
 

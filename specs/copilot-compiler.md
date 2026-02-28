@@ -29,14 +29,16 @@ Generate GitHub Copilot instructions and prompts in the format expected by Copil
 type CopilotCompiler struct{}
 
 func (c *CopilotCompiler) Name() string
-func (c *CopilotCompiler) Compile(resource Resource) ([]CompilationResult, error)
 func (c *CopilotCompiler) SupportedVersions() []string
+func (c *CopilotCompiler) Compile(resource *airesource.Resource) ([]CompilationResult, error)
 ```
 
 **Methods:**
 - `Name()` - Returns "copilot"
+- `SupportedVersions()` - Returns `["ai-resource/draft"]`
 - `Compile()` - Transforms resource into Copilot format
-- `SupportedVersions()` - Returns `["ai-resource/v1"]`
+  - Handles Rule, Ruleset, Prompt, Promptset kinds
+  - Returns one result per rule/prompt
 
 ### ApplyTo Frontmatter (Rules and Prompts)
 ```yaml
@@ -46,9 +48,20 @@ applyTo: []string        # File patterns from scope
 ```
 
 **Fields:**
-- `applyTo` - File patterns from scope.files (empty array if no scope)
+- `applyTo` - File patterns extracted from Scope []ScopeEntry (empty array if no scope)
 
 **Note:** excludeAgent field is omitted (not populated by compiler)
+
+**Scope Extraction:**
+```go
+func extractScopeFiles(scope []airesource.ScopeEntry) []string {
+    var files []string
+    for _, entry := range scope {
+        files = append(files, entry.Files...)
+    }
+    return files
+}
+```
 
 ### Output Structure
 
@@ -78,33 +91,102 @@ applyTo: []string
 
 ## Algorithm
 
-1. Determine resource type (rule vs prompt)
-2. Generate path using shared path functions
-3. If rule:
-   - Generate applyTo frontmatter from rule.scope.files
-   - Call `GenerateMetadataBlock(ruleset, rule)` from `internal/format/metadata.go`
-   - Call `GenerateEnforcementHeader(rule)` from `internal/format/metadata.go`
-   - Concatenate: frontmatter + metadata + header + body
-4. If prompt:
-   - Generate applyTo frontmatter from prompt.scope.files
-   - Use body content only (no metadata, no header)
-5. Return CompilationResult with path and content
+1. Check resource kind (Rule, Ruleset, Prompt, Promptset)
+2. Expand collections into individual items
+3. For each item:
+   - Resolve body using `airesource.ResolveBody(body, fragments)`
+   - Validate IDs using `ValidateID()`
+   - For rules: validate name using `ValidateRuleName()`
+   - Extract scope files from `[]ScopeEntry` using `extractScopeFiles()`
+   - Generate applyTo frontmatter (both rules and prompts)
+   - Generate path using shared path functions
+   - Generate content (frontmatter + metadata + header + body for rules, frontmatter + body for prompts)
+4. Return array of CompilationResults
 
 **Pseudocode:**
 ```
 function Compile(resource):
-    if resource.type == "rule":
-        path = BuildRulePath(resource.rulesetID, resource.ruleID, ".instructions.md")
-        
-        frontmatter = GenerateApplyToFrontmatter(resource.rule.scope.files)
-        metadata = GenerateMetadataBlock(resource.ruleset, resource.rule)
-        header = GenerateEnforcementHeader(resource.rule)
-        content = frontmatter + "\n" + metadata + "\n" + header + "\n\n" + resource.body
-    else:
-        path = BuildPromptPath(resource.promptsetID, resource.promptID, ".prompt.md")
-        
-        frontmatter = GenerateApplyToFrontmatter(resource.prompt.scope.files)
-        content = frontmatter + "\n" + resource.body
+    results = []
+    
+    switch resource.Kind:
+    case "Rule":
+        rule = resource.AsRule()
+        result = compileRule(rule.Metadata, rule.Metadata.ID, rule.Spec, rule.Spec.Fragments)
+        results.append(result)
+    
+    case "Ruleset":
+        ruleset = resource.AsRuleset()
+        for ruleID, ruleItem in ruleset.Spec.Rules:
+            result = compileRule(ruleset.Metadata, ruleID, ruleItem, ruleset.Spec.Fragments)
+            results.append(result)
+    
+    case "Prompt":
+        prompt = resource.AsPrompt()
+        result = compilePrompt(prompt.Metadata, prompt.Metadata.ID, prompt.Spec, prompt.Spec.Fragments)
+        results.append(result)
+    
+    case "Promptset":
+        promptset = resource.AsPromptset()
+        for promptID, promptItem in promptset.Spec.Prompts:
+            result = compilePrompt(promptset.Metadata, promptID, promptItem, promptset.Spec.Fragments)
+            results.append(result)
+    
+    return results
+
+function compileRule(metadata, ruleID, ruleSpec, fragments):
+    // Resolve body
+    resolvedBody = airesource.ResolveBody(ruleSpec.Body, fragments)
+    
+    // Validate
+    ValidateID(metadata.ID)
+    ValidateID(ruleID)
+    ValidateRuleName(ruleSpec.Name)
+    
+    // Extract scope files
+    scopeFiles = extractScopeFiles(ruleSpec.Scope)
+    
+    // Generate applyTo frontmatter
+    frontmatter = GenerateApplyToFrontmatter(scopeFiles)
+    
+    // Generate path
+    if resource.Kind == "Ruleset":
+        path = BuildCollectionPath(metadata.ID, ruleID, ".instructions.md")
+    else:  // resource.Kind == "Rule"
+        path = BuildStandalonePath(metadata.ID, ".instructions.md")
+    
+    // Generate complete content
+    if resource.Kind == "Ruleset":
+        content = GenerateRuleMetadataBlockFromRuleset(resource, ruleID)
+    else:  // resource.Kind == "Rule"
+        content = GenerateRuleMetadataBlockFromRule(resource)
+    
+    // Prepend frontmatter
+    content = frontmatter + "\n" + content
+    
+    return CompilationResult{Path: path, Content: content}
+
+function compilePrompt(metadata, promptID, promptSpec, fragments):
+    // Resolve body
+    resolvedBody = airesource.ResolveBody(promptSpec.Body, fragments)
+    
+    // Validate
+    ValidateID(metadata.ID)
+    ValidateID(promptID)
+    
+    // Extract scope files
+    scopeFiles = extractScopeFiles(promptSpec.Scope)
+    
+    // Generate applyTo frontmatter
+    frontmatter = GenerateApplyToFrontmatter(scopeFiles)
+    
+    // Generate path
+    if resource.Kind == "Promptset":
+        path = BuildCollectionPath(metadata.ID, promptID, ".prompt.md")
+    else:  // resource.Kind == "Prompt"
+        path = BuildStandalonePath(metadata.ID, ".prompt.md")
+    
+    // Use frontmatter + body
+    content = frontmatter + "\n" + resolvedBody
     
     return CompilationResult{Path: path, Content: content}
 ```
@@ -119,6 +201,8 @@ function Compile(resource):
 | Special characters in IDs | Use IDs as-is in path (sanitization handled by caller) |
 | Multi-line body | Preserve formatting and line breaks |
 | Unsupported apiVersion | Return error "unsupported apiVersion: {version} for copilot" |
+| Ruleset with multiple rules | Return one CompilationResult per rule |
+| Promptset with multiple prompts | Return one CompilationResult per prompt |
 
 ## Dependencies
 
