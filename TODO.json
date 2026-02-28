@@ -3,16 +3,20 @@
     {
       "id": "TASK-001",
       "priority": 1,
-      "status": "TODO",
+      "status": "DONE",
       "dependencies": [],
       "description": "Initialize Go module - Run 'go mod init github.com/jomadu/ai-resource-compiler-go' and add ai-resource-core-go dependency. See PLAN.md Task 1.1, AUDIT.md #1",
-      "comments": []
+      "comments": [
+        "Completed: go.mod initialized with ai-resource-core-go dependency. go build ./... succeeds."
+      ]
     },
     {
       "id": "TASK-002",
       "priority": 1,
       "status": "TODO",
-      "dependencies": ["TASK-001"],
+      "dependencies": [
+        "TASK-001"
+      ],
       "description": "Implement core compiler types in pkg/compiler/types.go - Define Target enum (5 constants), CompileOptions, CompilationResult. See PLAN.md Task 1.2, AUDIT.md #2, specs/compiler-architecture.md Data Structures",
       "comments": []
     },
@@ -20,7 +24,9 @@
       "id": "TASK-003",
       "priority": 1,
       "status": "TODO",
-      "dependencies": ["TASK-001"],
+      "dependencies": [
+        "TASK-001"
+      ],
       "description": "Implement TargetCompiler interface in pkg/compiler/interface.go - Define interface with Name(), SupportedVersions(), Compile() methods. See PLAN.md Task 1.3, AUDIT.md #2, specs/compiler-architecture.md",
       "comments": []
     },
@@ -28,7 +34,9 @@
       "id": "TASK-004",
       "priority": 1,
       "status": "TODO",
-      "dependencies": ["TASK-001"],
+      "dependencies": [
+        "TASK-001"
+      ],
       "description": "Implement path generation functions in internal/format/paths.go - BuildCollectionPath(), BuildStandalonePath(), BuildClaudeCollectionPath(), BuildClaudeStandalonePath(). See PLAN.md Task 1.4, AUDIT.md #3, specs/compiler-architecture.md Shared Functions",
       "comments": []
     },
@@ -36,7 +44,9 @@
       "id": "TASK-005",
       "priority": 1,
       "status": "TODO",
-      "dependencies": ["TASK-001"],
+      "dependencies": [
+        "TASK-001"
+      ],
       "description": "Implement validation functions in internal/format/validation.go - ValidateID() (alphanumeric + hyphen + underscore only), ValidateRuleName() (no parentheses). See PLAN.md Task 1.5, AUDIT.md #4, specs/validation-rules.md",
       "comments": []
     },
@@ -44,7 +54,10 @@
       "id": "TASK-006",
       "priority": 1,
       "status": "TODO",
-      "dependencies": ["TASK-002", "TASK-003"],
+      "dependencies": [
+        "TASK-002",
+        "TASK-003"
+      ],
       "description": "Implement core compiler pipeline in pkg/compiler/compiler.go - Compiler struct, NewCompiler(), RegisterTarget(), Compile() with validation and orchestration. See PLAN.md Task 1.6, AUDIT.md #2, specs/compiler-architecture.md Algorithm",
       "comments": []
     },
@@ -52,7 +65,11 @@
       "id": "TASK-007",
       "priority": 2,
       "status": "TODO",
-      "dependencies": ["TASK-001", "TASK-004", "TASK-005"],
+      "dependencies": [
+        "TASK-001",
+        "TASK-004",
+        "TASK-005"
+      ],
       "description": "Implement metadata generation in internal/format/metadata.go - GenerateRuleMetadataBlockFromRuleset(), GenerateRuleMetadataBlockFromRule() with YAML blocks and enforcement headers. See PLAN.md Task 2.1, AUDIT.md #5, specs/metadata-block.md",
       "comments": []
     },
@@ -60,7 +77,12 @@
       "id": "TASK-008",
       "priority": 2,
       "status": "TODO",
-      "dependencies": ["TASK-003", "TASK-004", "TASK-005", "TASK-007"],
+      "dependencies": [
+        "TASK-003",
+        "TASK-004",
+        "TASK-005",
+        "TASK-007"
+      ],
       "description": "Implement Markdown compiler in pkg/targets/markdown.go - MarkdownCompiler struct implementing TargetCompiler, .md extension, metadata blocks for rules. See PLAN.md Task 2.2, AUDIT.md #6, specs/markdown-compiler.md",
       "comments": []
     },
@@ -68,7 +90,12 @@
       "id": "TASK-009",
       "priority": 2,
       "status": "TODO",
-      "dependencies": ["TASK-003", "TASK-004", "TASK-005", "TASK-007"],
+      "dependencies": [
+        "TASK-003",
+        "TASK-004",
+        "TASK-005",
+        "TASK-007"
+      ],
       "description": "Implement Kiro compiler in pkg/targets/kiro.go - KiroCompiler struct, identical format to Markdown, .md extension. See PLAN.md Task 2.3, AUDIT.md #7, specs/kiro-compiler.md",
       "comments": []
     },
@@ -76,7 +103,12 @@
       "id": "TASK-010",
       "priority": 2,
       "status": "TODO",
-      "dependencies": ["TASK-003", "TASK-004", "TASK-005", "TASK-007"],
+      "dependencies": [
+        "TASK-003",
+        "TASK-004",
+        "TASK-005",
+        "TASK-007"
+      ],
       "description": "Implement Cursor compiler in pkg/targets/cursor.go - CursorCompiler struct, .mdc extension for rules with MDC frontmatter, .md for prompts. See PLAN.md Task 2.4, AUDIT.md #8, specs/cursor-compiler.md",
       "comments": []
     },
@@ -84,7 +116,12 @@
       "id": "TASK-011",
       "priority": 2,
       "status": "TODO",
-      "dependencies": ["TASK-003", "TASK-004", "TASK-005", "TASK-007"],
+      "dependencies": [
+        "TASK-003",
+        "TASK-004",
+        "TASK-005",
+        "TASK-007"
+      ],
       "description": "Implement Claude compiler in pkg/targets/claude.go - ClaudeCompiler struct, .md for rules, {id}/SKILL.md directory structure for prompts. See PLAN.md Task 2.5, AUDIT.md #9, specs/claude-compiler.md",
       "comments": []
     },
@@ -92,7 +129,12 @@
       "id": "TASK-012",
       "priority": 2,
       "status": "TODO",
-      "dependencies": ["TASK-003", "TASK-004", "TASK-005", "TASK-007"],
+      "dependencies": [
+        "TASK-003",
+        "TASK-004",
+        "TASK-005",
+        "TASK-007"
+      ],
       "description": "Implement Copilot compiler in pkg/targets/copilot.go - CopilotCompiler struct, .instructions.md for rules, .prompt.md for prompts, applyTo frontmatter. See PLAN.md Task 2.6, AUDIT.md #10, specs/copilot-compiler.md",
       "comments": []
     },
@@ -100,7 +142,14 @@
       "id": "TASK-013",
       "priority": 2,
       "status": "TODO",
-      "dependencies": ["TASK-006", "TASK-008", "TASK-009", "TASK-010", "TASK-011", "TASK-012"],
+      "dependencies": [
+        "TASK-006",
+        "TASK-008",
+        "TASK-009",
+        "TASK-010",
+        "TASK-011",
+        "TASK-012"
+      ],
       "description": "Register built-in target compilers in pkg/compiler/compiler.go - Update NewCompiler() to register all 5 targets (markdown, kiro, cursor, claude, copilot). See PLAN.md Task 2.7",
       "comments": []
     },
@@ -108,7 +157,9 @@
       "id": "TASK-014",
       "priority": 3,
       "status": "TODO",
-      "dependencies": ["TASK-013"],
+      "dependencies": [
+        "TASK-013"
+      ],
       "description": "Implement CLI main entry point in cmd/arc/main.go - Create arc command with flags (--target, --output, --flat, --help). See PLAN.md Task 3.1, AUDIT.md #11, specs/cli-design.md",
       "comments": []
     },
@@ -116,7 +167,9 @@
       "id": "TASK-015",
       "priority": 3,
       "status": "TODO",
-      "dependencies": ["TASK-014"],
+      "dependencies": [
+        "TASK-014"
+      ],
       "description": "Implement compile command logic in cmd/arc/compile.go - Validate args, load resource, create compiler, compile resource. See PLAN.md Task 3.2, specs/cli-design.md Algorithm",
       "comments": []
     },
@@ -124,7 +177,9 @@
       "id": "TASK-016",
       "priority": 3,
       "status": "TODO",
-      "dependencies": ["TASK-014"],
+      "dependencies": [
+        "TASK-014"
+      ],
       "description": "Implement output handlers in cmd/arc/output.go - outputStdout() with separators, outputFiles() with directory creation and --flat support. See PLAN.md Task 3.3, specs/cli-design.md Output Modes",
       "comments": []
     },
@@ -132,7 +187,10 @@
       "id": "TASK-017",
       "priority": 3,
       "status": "TODO",
-      "dependencies": ["TASK-015", "TASK-016"],
+      "dependencies": [
+        "TASK-015",
+        "TASK-016"
+      ],
       "description": "Install CLI tool - Run 'go install ./cmd/arc' to make arc command available system-wide. See PLAN.md Task 3.4",
       "comments": []
     },
@@ -140,7 +198,9 @@
       "id": "TASK-018",
       "priority": 3,
       "status": "TODO",
-      "dependencies": ["TASK-004"],
+      "dependencies": [
+        "TASK-004"
+      ],
       "description": "Write unit tests for path generation in internal/format/paths_test.go - Test all 4 path functions with examples from spec. See PLAN.md Task 4.1",
       "comments": []
     },
@@ -148,7 +208,9 @@
       "id": "TASK-019",
       "priority": 3,
       "status": "TODO",
-      "dependencies": ["TASK-005"],
+      "dependencies": [
+        "TASK-005"
+      ],
       "description": "Write unit tests for validation in internal/format/validation_test.go - Test ValidateID() and ValidateRuleName() with valid/invalid cases. See PLAN.md Task 4.2, specs/validation-rules.md Edge Cases",
       "comments": []
     },
@@ -156,7 +218,9 @@
       "id": "TASK-020",
       "priority": 3,
       "status": "TODO",
-      "dependencies": ["TASK-007"],
+      "dependencies": [
+        "TASK-007"
+      ],
       "description": "Write unit tests for metadata generation in internal/format/metadata_test.go - Test both functions with full/minimal metadata, verify YAML structure and enforcement headers. See PLAN.md Task 4.3",
       "comments": []
     },
@@ -164,7 +228,13 @@
       "id": "TASK-021",
       "priority": 3,
       "status": "TODO",
-      "dependencies": ["TASK-008", "TASK-009", "TASK-010", "TASK-011", "TASK-012"],
+      "dependencies": [
+        "TASK-008",
+        "TASK-009",
+        "TASK-010",
+        "TASK-011",
+        "TASK-012"
+      ],
       "description": "Write unit tests for target compilers - Create *_test.go for each target (markdown, kiro, cursor, claude, copilot), test all resource kinds, verify paths and content. See PLAN.md Task 4.4",
       "comments": []
     },
@@ -172,7 +242,9 @@
       "id": "TASK-022",
       "priority": 3,
       "status": "TODO",
-      "dependencies": ["TASK-013"],
+      "dependencies": [
+        "TASK-013"
+      ],
       "description": "Write integration tests in pkg/compiler/compiler_test.go - Test single/multi-target compilation, error handling, result aggregation. See PLAN.md Task 4.5",
       "comments": []
     },
@@ -180,7 +252,9 @@
       "id": "TASK-023",
       "priority": 3,
       "status": "TODO",
-      "dependencies": ["TASK-017"],
+      "dependencies": [
+        "TASK-017"
+      ],
       "description": "Write CLI integration tests in cmd/arc/arc_test.go - Test stdout/file output modes, multiple targets, error cases, flag parsing. See PLAN.md Task 4.6",
       "comments": []
     }
