@@ -281,12 +281,14 @@
     {
       "id": "TASK-022",
       "priority": 3,
-      "status": "TODO",
+      "status": "DONE",
       "dependencies": [
         "TASK-013"
       ],
       "description": "Write integration tests in pkg/compiler/compiler_test.go - Test single/multi-target compilation, error handling, result aggregation. See PLAN.md Task 4.5",
-      "comments": []
+      "comments": [
+        "Completed: Created pkg/compiler/compiler_test.go with integration tests. Tests cover single-target compilation, multi-target compilation, ruleset expansion, error handling (missing apiVersion/kind/id, no targets, unknown target, unsupported version), and target registration. Uses mock compilers to avoid import cycles. All tests pass."
+      ]
     },
     {
       "id": "TASK-023",
