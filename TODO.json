@@ -180,12 +180,14 @@
     {
       "id": "TASK-014",
       "priority": 3,
-      "status": "TODO",
+      "status": "DONE",
       "dependencies": [
         "TASK-013"
       ],
       "description": "Implement CLI main entry point in cmd/arc/main.go - Create arc command with flags (--target, --output, --flat, --help). See PLAN.md Task 3.1, AUDIT.md #11, specs/cli-design.md",
-      "comments": []
+      "comments": [
+        "Completed: Created cmd/arc/main.go with flag parsing using Go's flag package. Implements -target (repeatable), -output, -flat, -help flags. Validates resource file existence and target names. Placeholder compile() function for TASK-015. Note: Uses Go flag conventions (flags before positional args) rather than spec's flags-after-args format. go build ./... and go vet ./... succeed."
+      ]
     },
     {
       "id": "TASK-015",
