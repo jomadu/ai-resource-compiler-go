@@ -13,12 +13,14 @@
     {
       "id": "TASK-002",
       "priority": 1,
-      "status": "TODO",
+      "status": "DONE",
       "dependencies": [
         "TASK-001"
       ],
       "description": "Implement core compiler types in pkg/compiler/types.go - Define Target enum (5 constants), CompileOptions, CompilationResult. See PLAN.md Task 1.2, AUDIT.md #2, specs/compiler-architecture.md Data Structures",
-      "comments": []
+      "comments": [
+        "Completed: Created pkg/compiler/types.go with Target enum (5 constants), CompileOptions, and CompilationResult. go build ./... succeeds."
+      ]
     },
     {
       "id": "TASK-003",
