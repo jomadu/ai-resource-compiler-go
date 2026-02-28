@@ -118,7 +118,7 @@
     {
       "id": "TASK-010",
       "priority": 2,
-      "status": "TODO",
+      "status": "DONE",
       "dependencies": [
         "TASK-003",
         "TASK-004",
@@ -126,7 +126,9 @@
         "TASK-007"
       ],
       "description": "Implement Cursor compiler in pkg/targets/cursor.go - CursorCompiler struct, .mdc extension for rules with MDC frontmatter, .md for prompts. See PLAN.md Task 2.4, AUDIT.md #8, specs/cursor-compiler.md",
-      "comments": []
+      "comments": [
+        "Completed: Created pkg/targets/cursor.go with CursorCompiler implementing TargetCompiler interface. Handles Rule, Ruleset, Prompt, Promptset kinds. MDC frontmatter includes description, globs, alwaysApply. Rules use .mdc extension, prompts use .md. Added gopkg.in/yaml.v3 dependency. go build ./... and go vet ./... succeed."
+      ]
     },
     {
       "id": "TASK-011",
