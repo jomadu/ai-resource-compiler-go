@@ -11,6 +11,10 @@ import (
 
 type CursorCompiler struct{}
 
+func init() {
+	compiler.RegisterDefaultTarget(compiler.TargetCursor, &CursorCompiler{})
+}
+
 func (c *CursorCompiler) Name() string {
 	return "cursor"
 }

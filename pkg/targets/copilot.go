@@ -11,6 +11,10 @@ import (
 
 type CopilotCompiler struct{}
 
+func init() {
+	compiler.RegisterDefaultTarget(compiler.TargetCopilot, &CopilotCompiler{})
+}
+
 func (c *CopilotCompiler) Name() string {
 	return "copilot"
 }

@@ -7,40 +7,40 @@ import (
 	"github.com/jomadu/ai-resource-compiler-go/pkg/compiler"
 )
 
-type MarkdownCompiler struct{}
+type KiroCompiler struct{}
 
 func init() {
-	compiler.RegisterDefaultTarget(compiler.TargetMarkdown, &MarkdownCompiler{})
+	compiler.RegisterDefaultTarget(compiler.TargetKiro, &KiroCompiler{})
 }
 
-func (m *MarkdownCompiler) Name() string {
-	return "markdown"
+func (k *KiroCompiler) Name() string {
+	return "kiro"
 }
 
-func (m *MarkdownCompiler) SupportedVersions() []string {
+func (k *KiroCompiler) SupportedVersions() []string {
 	return []string{"ai-resource/draft"}
 }
 
-func (m *MarkdownCompiler) Compile(resource *compiler.Resource) ([]compiler.CompilationResult, error) {
+func (k *KiroCompiler) Compile(resource *compiler.Resource) ([]compiler.CompilationResult, error) {
 	if resource.APIVersion != "ai-resource/draft" {
-		return nil, fmt.Errorf("unsupported apiVersion: %s for markdown", resource.APIVersion)
+		return nil, fmt.Errorf("unsupported apiVersion: %s for kiro", resource.APIVersion)
 	}
 
 	switch resource.Kind {
 	case "Rule":
-		return m.compileRule(resource)
+		return k.compileRule(resource)
 	case "Ruleset":
-		return m.compileRuleset(resource)
+		return k.compileRuleset(resource)
 	case "Prompt":
-		return m.compilePrompt(resource)
+		return k.compilePrompt(resource)
 	case "Promptset":
-		return m.compilePromptset(resource)
+		return k.compilePromptset(resource)
 	default:
 		return nil, fmt.Errorf("unsupported kind: %s", resource.Kind)
 	}
 }
 
-func (m *MarkdownCompiler) compileRule(resource *compiler.Resource) ([]compiler.CompilationResult, error) {
+func (k *KiroCompiler) compileRule(resource *compiler.Resource) ([]compiler.CompilationResult, error) {
 	rule := resource.Spec.(*format.Rule)
 	
 	if err := format.ValidateID(rule.Metadata.ID); err != nil {
@@ -56,7 +56,7 @@ func (m *MarkdownCompiler) compileRule(resource *compiler.Resource) ([]compiler.
 	return []compiler.CompilationResult{{Path: path, Content: content}}, nil
 }
 
-func (m *MarkdownCompiler) compileRuleset(resource *compiler.Resource) ([]compiler.CompilationResult, error) {
+func (k *KiroCompiler) compileRuleset(resource *compiler.Resource) ([]compiler.CompilationResult, error) {
 	ruleset := resource.Spec.(*format.Ruleset)
 	
 	if err := format.ValidateID(ruleset.Metadata.ID); err != nil {
@@ -82,7 +82,7 @@ func (m *MarkdownCompiler) compileRuleset(resource *compiler.Resource) ([]compil
 	return results, nil
 }
 
-func (m *MarkdownCompiler) compilePrompt(resource *compiler.Resource) ([]compiler.CompilationResult, error) {
+func (k *KiroCompiler) compilePrompt(resource *compiler.Resource) ([]compiler.CompilationResult, error) {
 	prompt := resource.Spec.(*format.Prompt)
 	
 	if err := format.ValidateID(prompt.Metadata.ID); err != nil {
@@ -95,7 +95,7 @@ func (m *MarkdownCompiler) compilePrompt(resource *compiler.Resource) ([]compile
 	return []compiler.CompilationResult{{Path: path, Content: content}}, nil
 }
 
-func (m *MarkdownCompiler) compilePromptset(resource *compiler.Resource) ([]compiler.CompilationResult, error) {
+func (k *KiroCompiler) compilePromptset(resource *compiler.Resource) ([]compiler.CompilationResult, error) {
 	promptset := resource.Spec.(*format.Promptset)
 	
 	if err := format.ValidateID(promptset.Metadata.ID); err != nil {

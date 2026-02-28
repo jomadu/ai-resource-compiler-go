@@ -11,6 +11,10 @@ import (
 
 type ClaudeCompiler struct{}
 
+func init() {
+	compiler.RegisterDefaultTarget(compiler.TargetClaude, &ClaudeCompiler{})
+}
+
 func (c *ClaudeCompiler) Name() string {
 	return "claude"
 }

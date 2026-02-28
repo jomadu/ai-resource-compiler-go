@@ -1,18 +1,35 @@
 package compiler
 
-import "fmt"
+import (
+	"fmt"
+	"sync"
+)
+
+var (
+	defaultCompiler     *Compiler
+	defaultCompilerOnce sync.Once
+)
 
 // Compiler orchestrates compilation across multiple target formats.
 type Compiler struct {
 	targets map[Target]TargetCompiler
 }
 
-// NewCompiler creates a new compiler instance.
-// Built-in targets will be registered here once implemented.
+// NewCompiler creates a new compiler instance with all built-in targets registered.
 func NewCompiler() *Compiler {
-	return &Compiler{
+	defaultCompilerOnce.Do(func() {
+		defaultCompiler = &Compiler{
+			targets: make(map[Target]TargetCompiler),
+		}
+	})
+	// Return a copy with the same registered targets
+	c := &Compiler{
 		targets: make(map[Target]TargetCompiler),
 	}
+	for k, v := range defaultCompiler.targets {
+		c.targets[k] = v
+	}
+	return c
 }
 
 // RegisterTarget adds or replaces a target compiler.
@@ -22,6 +39,17 @@ func (c *Compiler) RegisterTarget(target Target, compiler TargetCompiler) error 
 	}
 	c.targets[target] = compiler
 	return nil
+}
+
+// RegisterDefaultTarget registers a target compiler in the default compiler instance.
+// This is used by target packages to register themselves during initialization.
+func RegisterDefaultTarget(target Target, compiler TargetCompiler) {
+	defaultCompilerOnce.Do(func() {
+		defaultCompiler = &Compiler{
+			targets: make(map[Target]TargetCompiler),
+		}
+	})
+	defaultCompiler.targets[target] = compiler
 }
 
 // Compile transforms a resource into one or more target formats.

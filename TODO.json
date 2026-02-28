@@ -163,7 +163,7 @@
     {
       "id": "TASK-013",
       "priority": 2,
-      "status": "TODO",
+      "status": "DONE",
       "dependencies": [
         "TASK-006",
         "TASK-008",
@@ -173,7 +173,9 @@
         "TASK-012"
       ],
       "description": "Register built-in target compilers in pkg/compiler/compiler.go - Update NewCompiler() to register all 5 targets (markdown, kiro, cursor, claude, copilot). See PLAN.md Task 2.7",
-      "comments": []
+      "comments": [
+        "Completed: Implemented init-based target registration. Each target compiler (markdown, kiro, cursor, claude, copilot) registers itself via init() function calling compiler.RegisterDefaultTarget(). NewCompiler() returns a compiler instance with all registered targets. go build ./... and go vet ./... succeed. Verified all 5 targets are registered."
+      ]
     },
     {
       "id": "TASK-014",
