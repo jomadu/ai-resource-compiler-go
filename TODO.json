@@ -133,7 +133,7 @@
     {
       "id": "TASK-011",
       "priority": 2,
-      "status": "TODO",
+      "status": "DONE",
       "dependencies": [
         "TASK-003",
         "TASK-004",
@@ -141,7 +141,9 @@
         "TASK-007"
       ],
       "description": "Implement Claude compiler in pkg/targets/claude.go - ClaudeCompiler struct, .md for rules, {id}/SKILL.md directory structure for prompts. See PLAN.md Task 2.5, AUDIT.md #9, specs/claude-compiler.md",
-      "comments": []
+      "comments": [
+        "Completed: Created pkg/targets/claude.go with ClaudeCompiler implementing TargetCompiler interface. Rules use .md extension with optional paths frontmatter. Prompts use {id}/SKILL.md directory structure. go build ./... succeeds."
+      ]
     },
     {
       "id": "TASK-012",
