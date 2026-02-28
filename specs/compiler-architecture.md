@@ -70,14 +70,18 @@ type CompilationResult struct {
 type TargetCompiler interface {
     Name() string
     SupportedVersions() []string
-    Compile(resource Resource) ([]CompilationResult, error)
+    Compile(resource *airesource.Resource) ([]CompilationResult, error)
 }
 ```
 
 **Methods:**
 - `Name()` - Returns target identifier (matches Target enum value)
-- `SupportedVersions()` - Returns list of supported API versions (e.g., ["ai-resource/v1"])
+- `SupportedVersions()` - Returns list of supported API versions (e.g., ["ai-resource/draft"])
 - `Compile()` - Transforms resource into target-specific format(s)
+  - Handles Rule, Ruleset, Prompt, Promptset kinds
+  - Expands collections (Ruleset/Promptset) into multiple results
+  - Resolves Body (string or array with fragments)
+  - Returns one result per rule/prompt
 
 ### Compiler
 ```go
@@ -87,111 +91,131 @@ type Compiler struct {
 
 func NewCompiler() *Compiler
 func (c *Compiler) RegisterTarget(target Target, compiler TargetCompiler) error
-func (c *Compiler) Compile(resource Resource, opts CompileOptions) ([]CompilationResult, error)
+func (c *Compiler) Compile(resource *airesource.Resource, opts CompileOptions) ([]CompilationResult, error)
 ```
 
 **Methods:**
 - `NewCompiler()` - Creates compiler with all built-in targets registered
 - `RegisterTarget()` - Adds or replaces target compiler
 - `Compile()` - Compiles resource for all requested targets
+  - Validates resource structure (apiVersion, kind, metadata.id)
+  - For each target: calls target.Compile(resource)
+  - Aggregates results from all targets
 
 ## Shared Functions
 
 Target compilers use these shared functions to generate consistent file paths.
 
-### BuildRulePath
+### BuildCollectionPath
 
 ```go
-func BuildRulePath(rulesetID, ruleID, extension string) string
+func BuildCollectionPath(collectionID, itemID, extension string) string
 ```
 
 **Parameters:**
-- `rulesetID` - Ruleset collection identifier
-- `ruleID` - Rule item identifier
+- `collectionID` - Collection identifier (Ruleset or Promptset ID)
+- `itemID` - Item identifier (rule or prompt map key)
 - `extension` - File extension (e.g., ".md", ".mdc", ".instructions.md")
 
 **Returns:**
-- File path string in format `{rulesetID}_{ruleID}{extension}`
+- File path string in format `{collectionID}_{itemID}{extension}`
 
 **Algorithm:**
-1. Concatenate rulesetID + "_" + ruleID
+1. Concatenate collectionID + "_" + itemID
 2. Append extension
 3. Return formatted path
 
 **Example:**
 ```go
-path := BuildRulePath("cleanCode", "meaningfulNames", ".md")
+path := BuildCollectionPath("cleanCode", "meaningfulNames", ".md")
 // Returns: "cleanCode_meaningfulNames.md"
 
-path := BuildRulePath("security", "noSecrets", ".mdc")
-// Returns: "security_noSecrets.mdc"
+path := BuildCollectionPath("codeReview", "reviewPR", ".prompt.md")
+// Returns: "codeReview_reviewPR.prompt.md"
 ```
 
-### BuildPromptPath
+### BuildStandalonePath
 
 ```go
-func BuildPromptPath(promptsetID, promptID, extension string) string
+func BuildStandalonePath(resourceID, extension string) string
 ```
 
 **Parameters:**
-- `promptsetID` - Promptset collection identifier
-- `promptID` - Prompt item identifier
-- `extension` - File extension (e.g., ".md", ".prompt.md")
+- `resourceID` - Resource identifier (from Metadata.ID)
+- `extension` - File extension (e.g., ".md", ".mdc", ".instructions.md")
 
 **Returns:**
-- File path string in format `{promptsetID}_{promptID}{extension}`
+- File path string in format `{resourceID}{extension}`
 
 **Algorithm:**
-1. Concatenate promptsetID + "_" + promptID
-2. Append extension
-3. Return formatted path
+1. Concatenate resourceID + extension
+2. Return formatted path
 
 **Example:**
 ```go
-path := BuildPromptPath("codeReview", "reviewPR", ".md")
-// Returns: "codeReview_reviewPR.md"
+path := BuildStandalonePath("meaningfulNames", ".md")
+// Returns: "meaningfulNames.md"
 
-path := BuildPromptPath("refactoring", "extractFunction", ".prompt.md")
-// Returns: "refactoring_extractFunction.prompt.md"
+path := BuildStandalonePath("reviewPR", ".prompt.md")
+// Returns: "reviewPR.prompt.md"
 ```
 
-### BuildClaudePromptPath
+### BuildClaudeCollectionPath
 
 ```go
-func BuildClaudePromptPath(promptsetID, promptID string) string
+func BuildClaudeCollectionPath(collectionID, itemID string) string
 ```
 
 **Parameters:**
-- `promptsetID` - Promptset collection identifier
-- `promptID` - Prompt item identifier
+- `collectionID` - Collection identifier (Promptset ID)
+- `itemID` - Item identifier (prompt map key)
 
 **Returns:**
-- Directory path string in format `{promptsetID}_{promptID}/SKILL.md`
+- Directory path string in format `{collectionID}_{itemID}/SKILL.md`
 
 **Algorithm:**
-1. Concatenate promptsetID + "_" + promptID
+1. Concatenate collectionID + "_" + itemID
 2. Append "/SKILL.md"
 3. Return formatted path
 
 **Example:**
 ```go
-path := BuildClaudePromptPath("codeReview", "reviewPR")
+path := BuildClaudeCollectionPath("codeReview", "reviewPR")
 // Returns: "codeReview_reviewPR/SKILL.md"
+```
 
-path := BuildClaudePromptPath("debugging", "findBug")
-// Returns: "debugging_findBug/SKILL.md"
+### BuildClaudeStandalonePath
+
+```go
+func BuildClaudeStandalonePath(resourceID string) string
+```
+
+**Parameters:**
+- `resourceID` - Resource identifier (from Metadata.ID)
+
+**Returns:**
+- Directory path string in format `{resourceID}/SKILL.md`
+
+**Algorithm:**
+1. Concatenate resourceID + "/SKILL.md"
+2. Return formatted path
+
+**Example:**
+```go
+path := BuildClaudeStandalonePath("reviewPR")
+// Returns: "reviewPR/SKILL.md"
 ```
 
 ## Algorithm
 
 ### Compilation Pipeline
 
-1. Validate resource IDs and rule names (if rule type)
+1. Validate resource structure (apiVersion, kind, metadata.id)
 2. Validate CompileOptions (non-empty targets list)
 3. For each requested target:
    - Look up registered TargetCompiler
    - Check target supports resource.APIVersion
-   - Call compiler.Compile(resource)
+   - Call target.Compile(resource)
    - Collect CompilationResults
 4. Return aggregated results from all targets
 
@@ -199,12 +223,14 @@ path := BuildClaudePromptPath("debugging", "findBug")
 ```
 function Compile(resource, opts):
     // Step 1: Validate resource
-    if err := ValidateResourceIDs(resource):
-        return error(err)
+    if resource.APIVersion is empty:
+        return error("missing apiVersion")
     
-    if resource.Type == "rule":
-        if err := ValidateRuleForCompilation(resource.Rule):
-            return error(err)
+    if resource.Kind is empty:
+        return error("missing kind")
+    
+    if resource.Metadata.ID is empty:
+        return error("missing metadata.id")
     
     // Step 2: Validate options
     if opts.Targets is empty:
@@ -217,11 +243,12 @@ function Compile(resource, opts):
         if compiler is nil:
             return error("unknown target: " + target)
         
-        // Step 3.5: Check version compatibility
+        // Check version compatibility
         supportedVersions = compiler.SupportedVersions()
         if resource.APIVersion not in supportedVersions:
             return error("target " + target + " does not support apiVersion: " + resource.APIVersion)
         
+        // Compile resource
         targetResults = compiler.Compile(resource)
         results.append(targetResults)
     
@@ -233,20 +260,25 @@ function Compile(resource, opts):
 
 Target compilers use shared path generation functions to ensure consistency.
 
-**Rules:**
-- Use `BuildRulePath(rulesetID, ruleID, extension)`
+**Collection items (Ruleset/Promptset):**
+- Use `BuildCollectionPath(collectionID, itemID, extension)`
 - Pattern: `{collection-id}_{item-id}.{ext}`
 - Example: `cleanCode_meaningfulNames.mdc`
 
-**Prompts (most targets):**
-- Use `BuildPromptPath(promptsetID, promptID, extension)`
-- Pattern: `{collection-id}_{item-id}.{ext}`
-- Example: `codeReview_reviewPR.md`
+**Standalone resources (Rule/Prompt):**
+- Use `BuildStandalonePath(resourceID, extension)`
+- Pattern: `{resource-id}.{ext}`
+- Example: `meaningfulNames.mdc`
 
-**Claude Prompts (special case):**
-- Use `BuildClaudePromptPath(promptsetID, promptID)`
+**Claude collection items (special case):**
+- Use `BuildClaudeCollectionPath(collectionID, itemID)`
 - Pattern: `{collection-id}_{item-id}/SKILL.md`
 - Example: `codeReview_reviewPR/SKILL.md`
+
+**Claude standalone resources (special case):**
+- Use `BuildClaudeStandalonePath(resourceID)`
+- Pattern: `{resource-id}/SKILL.md`
+- Example: `reviewPR/SKILL.md`
 
 **Extension by Target:**
 - Cursor rules: `.mdc`
@@ -323,12 +355,16 @@ func (c *CursorCompiler) Compile(resource Resource) ([]CompilationResult, error)
 
 ## Dependencies
 
-- Resource model from ai-resource-core-go (Ruleset, Rule, Promptset, Prompt)
+- Resource model from ai-resource-core-go (Resource, Ruleset, Rule, Promptset, Prompt, RuleItem, PromptItem, Metadata)
   - **Note:** Resource includes `APIVersion` field for version detection
+  - **Note:** Collections (Ruleset, Promptset) contain maps of items
+  - **Note:** Body is union type (string or array) that may need resolution
+  - **Note:** Scope is []ScopeEntry, each with Files []string
 - Target-specific compilers (implement TargetCompiler interface)
 - Metadata block generation (from metadata-block.md spec)
 - Path generation functions (shared across all target compilers)
 - Resource validation (from validation-rules.md spec)
+- Body resolution from ai-resource-core-go (ResolveBody function)
 
 ## Implementation Mapping
 
@@ -341,7 +377,7 @@ func (c *CursorCompiler) Compile(resource Resource) ([]CompilationResult, error)
 - `pkg/targets/claude.go` - Claude target compiler
 - `pkg/targets/copilot.go` - Copilot target compiler
 - `pkg/targets/markdown.go` - Markdown target compiler
-- `internal/format/paths.go` - Implements `BuildRulePath()`, `BuildPromptPath()`, and `BuildClaudePromptPath()` functions
+- `internal/format/paths.go` - Implements `BuildCollectionPath()`, `BuildStandalonePath()`, `BuildClaudeCollectionPath()`, and `BuildClaudeStandalonePath()` functions
 - `internal/format/validation.go` - Implements `ValidateResourceIDs()` and `ValidateRuleForCompilation()` functions
 
 **Related specs:**
@@ -355,17 +391,52 @@ func (c *CursorCompiler) Compile(resource Resource) ([]CompilationResult, error)
 
 ## Examples
 
-### Example 1: Single Target Compilation
+### Example 1: Single Rule Compilation
 
 **Input:**
 ```go
 compiler := NewCompiler()
-resource := Resource{
-    Type: "rule",
-    Ruleset: Ruleset{ID: "cleanCode", Name: "Clean Code"},
-    Rule: Rule{ID: "meaningfulNames", Name: "Use Meaningful Names", Enforcement: "must"},
-    Body: "Use descriptive names.",
+
+// Load a standalone Rule resource
+resource, _ := airesource.LoadResource("rule.yaml")
+// resource.Kind == "Rule"
+// resource.Metadata.ID == "meaningfulNames"
+
+opts := CompileOptions{Targets: []Target{TargetMarkdown}}
+
+results, err := compiler.Compile(resource, opts)
+```
+
+**Expected Output:**
+```go
+[]CompilationResult{
+    {
+        Path: "meaningfulNames.md",
+        Content: "---\nruleset:\n  id: meaningfulNames\n...",
+    },
 }
+```
+
+**Verification:**
+- Single result returned
+- Path is just `{resource-id}.{ext}` (no collection prefix)
+- Content includes metadata block and rule body
+
+### Example 2: Ruleset Expansion
+
+**Input:**
+```go
+compiler := NewCompiler()
+
+// Load a Ruleset resource
+resource, _ := airesource.LoadResource("ruleset.yaml")
+// resource.Kind == "Ruleset"
+// resource.Metadata.ID == "cleanCode"
+// resource.Spec.Rules == map[string]RuleItem{
+//     "meaningfulNames": {...},
+//     "smallFunctions": {...},
+// }
+
 opts := CompileOptions{Targets: []Target{TargetMarkdown}}
 
 results, err := compiler.Compile(resource, opts)
@@ -376,27 +447,29 @@ results, err := compiler.Compile(resource, opts)
 []CompilationResult{
     {
         Path: "cleanCode_meaningfulNames.md",
-        Content: "---\nruleset:\n  id: cleanCode\n...",
+        Content: "...",
+    },
+    {
+        Path: "cleanCode_smallFunctions.md",
+        Content: "...",
     },
 }
 ```
 
 **Verification:**
-- Single result returned
-- Path follows {collection-id}_{item-id}.{ext} pattern
-- Content includes metadata block and rule body
+- Two results returned (one per rule in ruleset)
+- Each path uses ruleset ID as collection ID
+- Each path uses rule map key as item ID
+- Compiler expanded Ruleset into individual rules
 
-### Example 2: Multi-Target Compilation
+### Example 3: Multi-Target Compilation
 
 **Input:**
 ```go
 compiler := NewCompiler()
-resource := Resource{
-    Type: "rule",
-    Ruleset: Ruleset{ID: "cleanCode", Name: "Clean Code"},
-    Rule: Rule{ID: "meaningfulNames", Name: "Use Meaningful Names", Enforcement: "must"},
-    Body: "Use descriptive names.",
-}
+
+resource, _ := airesource.LoadResource("rule.yaml")
+
 opts := CompileOptions{Targets: []Target{TargetMarkdown, TargetKiro, TargetCursor}}
 
 results, err := compiler.Compile(resource, opts)
@@ -416,17 +489,16 @@ results, err := compiler.Compile(resource, opts)
 - Each target produces appropriate extension
 - Content formatted per target requirements
 
-### Example 3: Claude Prompt (Special Path)
+### Example 4: Claude Prompt (Special Path)
 
 **Input:**
 ```go
 compiler := NewCompiler()
-resource := Resource{
-    Type: "prompt",
-    Promptset: Promptset{ID: "codeReview", Name: "Code Review"},
-    Prompt: Prompt{ID: "reviewPR", Name: "Review Pull Request"},
-    Body: "Review this PR.",
-}
+
+resource, _ := airesource.LoadResource("prompt.yaml")
+// resource.Kind == "Prompt"
+// resource.Metadata.ID == "reviewPR"
+
 opts := CompileOptions{Targets: []Target{TargetClaude}}
 
 results, err := compiler.Compile(resource, opts)
@@ -436,7 +508,7 @@ results, err := compiler.Compile(resource, opts)
 ```go
 []CompilationResult{
     {
-        Path: "codeReview_reviewPR/SKILL.md",
+        Path: "reviewPR/SKILL.md",
         Content: "Review this PR.",
     },
 }
@@ -445,13 +517,14 @@ results, err := compiler.Compile(resource, opts)
 **Verification:**
 - Path uses directory structure with SKILL.md
 - Content is plain body (no metadata for prompts)
+- Path is just `{resource-id}/SKILL.md` (no collection prefix)
 
-### Example 4: Error Handling
+### Example 5: Error Handling
 
 **Input:**
 ```go
 compiler := NewCompiler()
-resource := Resource{...}
+resource, _ := airesource.LoadResource("rule.yaml")
 opts := CompileOptions{Targets: []Target{"invalid"}}
 
 results, err := compiler.Compile(resource, opts)
@@ -467,30 +540,30 @@ err.Error() == "unknown target: invalid"
 - Error returned for unknown target
 - No results produced
 
-### Example 5: Multi-Resource Compilation
+### Example 6: Multi-Resource Compilation
 
 **Input:**
 ```go
 import (
-    "github.com/jomadu/ai-resource-core-go/pkg/core"
+    "github.com/aws/ai-resource-core-go/pkg/airesource"
     "github.com/jomadu/ai-resource-compiler-go/pkg/compiler"
 )
 
 // Load multi-document YAML
-resources, err := core.LoadResources("resources.yaml")
+resources, err := airesource.LoadResources("resources.yaml")
 if err != nil {
     log.Fatal(err)
 }
 
 // Compile each resource
-compiler := compiler.NewCompiler()
+c := compiler.NewCompiler()
 opts := compiler.CompileOptions{
     Targets: []compiler.Target{compiler.TargetMarkdown},
 }
 
 allResults := []compiler.CompilationResult{}
 for _, resource := range resources {
-    results, err := compiler.Compile(resource, opts)
+    results, err := c.Compile(resource, opts)
     if err != nil {
         log.Fatal(err)
     }
@@ -500,25 +573,28 @@ for _, resource := range resources {
 
 **Expected Output:**
 ```go
-// If resources.yaml contains 2 rules and 1 prompt:
+// If resources.yaml contains 1 ruleset with 2 rules and 1 prompt:
 len(allResults) == 3
 allResults[0].Path == "cleanCode_meaningfulNames.md"
-allResults[1].Path == "security_noSecrets.md"
+allResults[1].Path == "cleanCode_smallFunctions.md"
 allResults[2].Path == "codeReview_reviewPR.md"
 ```
 
 **Verification:**
 - Each resource from multi-document YAML compiled independently
+- Ruleset expanded into 2 individual rules
 - Results aggregated across all resources
 - Demonstrates integration with ai-resource-core-go
 
-### Example 6: Multi-Version Compilation
+### Example 7: Version Handling
+
+### Example 7: Version Handling
 
 **Input:**
 ```go
 // Load resources with different versions
-v1Resource, _ := core.LoadResource("v1-rule.yaml")  // apiVersion: ai-resource/v1
-v2Resource, _ := core.LoadResource("v2-rule.yaml")  // apiVersion: ai-resource/v2
+draftResource, _ := airesource.LoadResource("draft-rule.yaml")  // apiVersion: ai-resource/draft
+v1Resource, _ := airesource.LoadResource("v1-rule.yaml")        // apiVersion: ai-resource/v1 (future)
 
 compiler := compiler.NewCompiler()
 opts := compiler.CompileOptions{
@@ -526,23 +602,24 @@ opts := compiler.CompileOptions{
 }
 
 // Compile both versions
-results1, _ := compiler.Compile(v1Resource, opts)
-results2, _ := compiler.Compile(v2Resource, opts)
+results1, _ := compiler.Compile(draftResource, opts)
+results2, err := compiler.Compile(v1Resource, opts)
+// err != nil if target doesn't support v1 yet
 ```
 
 **Expected Output:**
 ```go
-// Both compile successfully
+// Draft version compiles successfully
 len(results1) == 1
-len(results2) == 1
 
-// Compiler handled version-specific structures internally
+// V1 version may fail if not yet supported
+err.Error() == "target markdown does not support apiVersion: ai-resource/v1"
 ```
 
 **Verification:**
-- Both v1 and v2 resources compile without error
-- Output format matches target requirements for each version
-- Compiler correctly accessed version-specific fields
+- Compiler checks version compatibility per target
+- Targets can support different version ranges
+- Clear error when version not supported
 
 ## Notes
 

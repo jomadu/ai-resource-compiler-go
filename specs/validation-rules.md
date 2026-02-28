@@ -4,18 +4,20 @@
 Ensure resource IDs are filesystem-safe before compilation to prevent path traversal, invalid filenames, and cross-platform compatibility issues.
 
 ## Activities
-1. Validate collection IDs (ruleset, promptset) for filesystem safety
-2. Validate item IDs (rule, prompt) for filesystem safety
-3. Reject resources with invalid characters in IDs
-4. Return clear error messages identifying invalid IDs and characters
+1. Validate collection IDs (metadata.id) for filesystem safety
+2. Validate item IDs (map keys in rules/prompts) for filesystem safety
+3. Validate rule names for compilation compatibility (no parentheses)
+4. Reject resources with invalid characters in IDs
+5. Return clear error messages identifying invalid IDs and characters
 
 ## Acceptance Criteria
-- [ ] ValidateResourceIDs function checks all collection and item IDs
+- [ ] ValidateID function checks individual ID strings
+- [ ] ValidateRuleName function checks rule names for parentheses
 - [ ] Only alphanumeric characters, hyphens, and underscores allowed (a-z, A-Z, 0-9, -, _)
 - [ ] Invalid characters rejected: / \ : * ? " < > |
 - [ ] Error messages identify which ID is invalid and which character caused rejection
 - [ ] Empty IDs rejected with clear error message
-- [ ] Validation occurs before any compilation steps
+- [ ] Validation occurs during compilation pipeline
 
 ## Data Structures
 
@@ -37,97 +39,61 @@ type ValidationError struct {
 
 ## Algorithm
 
-### ValidateResourceIDs
+### ValidateID
 
 ```go
-func ValidateResourceIDs(resource Resource) error
+func ValidateID(id string) error
 ```
 
 **Parameters:**
-- `resource` - Resource to validate (contains ruleset/promptset and rule/prompt)
+- `id` - ID string to validate (from metadata.id or map key)
 
 **Returns:**
-- `nil` if all IDs are valid
-- `ValidationError` if any ID is invalid
+- `nil` if ID is valid
+- `error` if ID is invalid
 
 **Algorithm:**
-1. Determine resource type (rule vs prompt)
-2. If rule type:
-   - Validate `resource.Ruleset.ID`
-   - Validate `resource.Rule.ID`
-3. If prompt type:
-   - Validate `resource.Promptset.ID`
-   - Validate `resource.Prompt.ID`
-4. For each ID:
-   - Check if empty → return error
-   - Check each character against allowed set
-   - If invalid character found → return error with details
-5. Return nil if all IDs valid
+1. Check if empty → return error
+2. Check each character against allowed set
+3. If invalid character found → return error with details
+4. Return nil if valid
 
 **Pseudocode:**
 ```
-function ValidateResourceIDs(resource):
-    if resource.Type == "rule":
-        if err := validateID(resource.Ruleset.ID, "ruleset.id"):
-            return err
-        if err := validateID(resource.Rule.ID, "rule.id"):
-            return err
-    else if resource.Type == "prompt":
-        if err := validateID(resource.Promptset.ID, "promptset.id"):
-            return err
-        if err := validateID(resource.Prompt.ID, "prompt.id"):
-            return err
-    
-    return nil
-
-function validateID(id, fieldName):
+function ValidateID(id):
     if id is empty:
-        return ValidationError{
-            Field: fieldName,
-            Value: "",
-            Message: fieldName + " cannot be empty"
-        }
+        return error("ID cannot be empty")
     
     for each character in id:
         if character not in [a-z, A-Z, 0-9, -, _]:
-            return ValidationError{
-                Field: fieldName,
-                Value: id,
-                InvalidChar: character,
-                Message: fieldName + " contains invalid character '" + character + "' in '" + id + "'"
-            }
+            return error("ID contains invalid character '" + character + "' in '" + id + "'")
     
     return nil
 ```
 
-### ValidateRuleForCompilation
+### ValidateRuleName
 
 ```go
-func ValidateRuleForCompilation(rule Rule) error
+func ValidateRuleName(name string) error
 ```
 
 **Parameters:**
-- `rule` - Rule to validate for compilation
+- `name` - Rule name to validate
 
 **Returns:**
 - `nil` if rule name is valid
-- `ValidationError` if rule name contains parentheses
+- `error` if rule name contains parentheses
 
 **Algorithm:**
-1. Check if rule.Name contains '(' or ')'
+1. Check if name contains '(' or ')'
 2. If found → return error
 3. Return nil if valid
 
 **Pseudocode:**
 ```
-function ValidateRuleForCompilation(rule):
-    if rule.Name contains '(' or ')':
-        return ValidationError{
-            Field: "rule.name",
-            Value: rule.Name,
-            InvalidChar: "(" or ")",
-            Message: "rule.name cannot contain parentheses: '" + rule.Name + "'"
-        }
+function ValidateRuleName(name):
+    if name contains '(' or ')':
+        return error("rule name cannot contain parentheses: '" + name + "'")
     
     return nil
 ```
@@ -158,52 +124,45 @@ function ValidateRuleForCompilation(rule):
 
 | Condition | Expected Behavior |
 |-----------|-------------------|
-| Empty ID | Return error "{field} cannot be empty" |
-| ID with forward slash | Return error "{field} contains invalid character '/' in '{id}'" |
-| ID with backslash | Return error "{field} contains invalid character '\\' in '{id}'" |
-| ID with colon | Return error "{field} contains invalid character ':' in '{id}'" |
-| ID with asterisk | Return error "{field} contains invalid character '*' in '{id}'" |
-| ID with question mark | Return error "{field} contains invalid character '?' in '{id}'" |
-| ID with double quote | Return error "{field} contains invalid character '"' in '{id}'" |
-| ID with angle brackets | Return error "{field} contains invalid character '<' or '>' in '{id}'" |
-| ID with pipe | Return error "{field} contains invalid character '\|' in '{id}'" |
-| ID with spaces | Return error "{field} contains invalid character ' ' in '{id}'" |
+| Empty ID | Return error "ID cannot be empty" |
+| ID with forward slash | Return error "ID contains invalid character '/' in '{id}'" |
+| ID with backslash | Return error "ID contains invalid character '\\' in '{id}'" |
+| ID with colon | Return error "ID contains invalid character ':' in '{id}'" |
+| ID with asterisk | Return error "ID contains invalid character '*' in '{id}'" |
+| ID with question mark | Return error "ID contains invalid character '?' in '{id}'" |
+| ID with double quote | Return error "ID contains invalid character '"' in '{id}'" |
+| ID with angle brackets | Return error "ID contains invalid character '<' or '>' in '{id}'" |
+| ID with pipe | Return error "ID contains invalid character '\|' in '{id}'" |
+| ID with spaces | Return error "ID contains invalid character ' ' in '{id}'" |
 | ID with only valid chars | Return nil (success) |
 | Multiple invalid chars | Return error for first invalid character encountered |
-| Rule name with opening paren | Return error "rule.name cannot contain parentheses: '{name}'" |
-| Rule name with closing paren | Return error "rule.name cannot contain parentheses: '{name}'" |
-| Rule name with both parens | Return error "rule.name cannot contain parentheses: '{name}'" |
+| Rule name with opening paren | Return error "rule name cannot contain parentheses: '{name}'" |
+| Rule name with closing paren | Return error "rule name cannot contain parentheses: '{name}'" |
+| Rule name with both parens | Return error "rule name cannot contain parentheses: '{name}'" |
 | Rule name without parens | Return nil (success) |
 
 ## Dependencies
 
-- Resource model from ai-resource-core-go (Ruleset, Rule, Promptset, Prompt structures)
-- No external validation libraries required (simple character checking)
+- No external dependencies (simple character checking)
 
 ## Implementation Mapping
 
 **Source files:**
-- `internal/format/validation.go` - Implements `ValidateResourceIDs()` and helper functions
-- `pkg/compiler/compiler.go` - Calls validation before compilation pipeline
+- `internal/format/validation.go` - Implements `ValidateID()` and `ValidateRuleName()` functions
+- `pkg/compiler/compiler.go` - Calls validation during compilation pipeline
 
 **Related specs:**
-- `compiler-architecture.md` - References validation as step 1 in compilation pipeline
+- `compiler-architecture.md` - References validation in compilation pipeline
 - `metadata-block.md` - Assumes valid IDs for metadata generation
-- All target compiler specs - Assume IDs are pre-validated
+- All target compiler specs - Assume IDs are validated during compilation
 
 ## Examples
 
-### Example 1: Valid Rule IDs
+### Example 1: Valid ID
 
 **Input:**
 ```go
-resource := Resource{
-    Type: "rule",
-    Ruleset: Ruleset{ID: "cleanCode"},
-    Rule: Rule{ID: "meaningfulNames"},
-}
-
-err := ValidateResourceIDs(resource)
+err := ValidateID("cleanCode")
 ```
 
 **Expected Output:**
@@ -212,20 +171,14 @@ err == nil
 ```
 
 **Verification:**
-- Both IDs contain only lowercase letters
+- ID contains only lowercase letters
 - No error returned
 
-### Example 2: Valid IDs with Numbers and Hyphens
+### Example 2: Valid ID with Numbers and Hyphens
 
 **Input:**
 ```go
-resource := Resource{
-    Type: "rule",
-    Ruleset: Ruleset{ID: "clean-code-v2"},
-    Rule: Rule{ID: "meaningful_names_2024"},
-}
-
-err := ValidateResourceIDs(resource)
+err := ValidateID("clean-code-v2")
 ```
 
 **Expected Output:**
@@ -234,135 +187,99 @@ err == nil
 ```
 
 **Verification:**
-- IDs contain letters, numbers, hyphens, underscores
+- ID contains letters, numbers, hyphens
 - All characters valid
 
 ### Example 3: Invalid Character - Forward Slash
 
 **Input:**
 ```go
-resource := Resource{
-    Type: "rule",
-    Ruleset: Ruleset{ID: "clean/code"},
-    Rule: Rule{ID: "meaningfulNames"},
-}
-
-err := ValidateResourceIDs(resource)
+err := ValidateID("clean/code")
 ```
 
 **Expected Output:**
 ```go
-err.Error() == "ruleset.id contains invalid character '/' in 'clean/code'"
+err.Error() == "ID contains invalid character '/' in 'clean/code'"
 ```
 
 **Verification:**
-- Forward slash detected in ruleset ID
-- Error message identifies field, character, and value
+- Forward slash detected
+- Error message identifies character and value
 
 ### Example 4: Invalid Character - Asterisk
 
 **Input:**
 ```go
-resource := Resource{
-    Type: "prompt",
-    Promptset: Promptset{ID: "codeReview"},
-    Prompt: Prompt{ID: "review*PR"},
-}
-
-err := ValidateResourceIDs(resource)
+err := ValidateID("review*PR")
 ```
 
 **Expected Output:**
 ```go
-err.Error() == "prompt.id contains invalid character '*' in 'review*PR'"
+err.Error() == "ID contains invalid character '*' in 'review*PR'"
 ```
 
 **Verification:**
-- Asterisk detected in prompt ID
-- Error identifies prompt field specifically
+- Asterisk detected
+- Error identifies character
 
 ### Example 5: Empty ID
 
 **Input:**
 ```go
-resource := Resource{
-    Type: "rule",
-    Ruleset: Ruleset{ID: "cleanCode"},
-    Rule: Rule{ID: ""},
-}
-
-err := ValidateResourceIDs(resource)
+err := ValidateID("")
 ```
 
 **Expected Output:**
 ```go
-err.Error() == "rule.id cannot be empty"
+err.Error() == "ID cannot be empty"
 ```
 
 **Verification:**
 - Empty ID detected
-- Clear error message without character reference
+- Clear error message
 
 ### Example 6: Multiple Invalid Characters
 
 **Input:**
 ```go
-resource := Resource{
-    Type: "rule",
-    Ruleset: Ruleset{ID: "clean:code?"},
-    Rule: Rule{ID: "meaningfulNames"},
-}
-
-err := ValidateResourceIDs(resource)
+err := ValidateID("clean:code?")
 ```
 
 **Expected Output:**
 ```go
-err.Error() == "ruleset.id contains invalid character ':' in 'clean:code?'"
+err.Error() == "ID contains invalid character ':' in 'clean:code?'"
 ```
 
 **Verification:**
 - First invalid character (colon) reported
-- Error stops at first violation (doesn't report question mark)
+- Error stops at first violation
 
 ### Example 7: Space Character
 
 **Input:**
 ```go
-resource := Resource{
-    Type: "rule",
-    Ruleset: Ruleset{ID: "clean code"},
-    Rule: Rule{ID: "meaningfulNames"},
-}
-
-err := ValidateResourceIDs(resource)
+err := ValidateID("clean code")
 ```
 
 **Expected Output:**
 ```go
-err.Error() == "ruleset.id contains invalid character ' ' in 'clean code'"
+err.Error() == "ID contains invalid character ' ' in 'clean code'"
 ```
 
 **Verification:**
 - Space character detected and rejected
-- Error message shows space in quotes
+- Error message shows space
 
 ### Example 8: Rule Name with Parentheses
 
 **Input:**
 ```go
-rule := Rule{
-    ID: "meaningfulNames",
-    Name: "Use (Smart) Names",
-    Enforcement: "must",
-}
-
-err := ValidateRuleForCompilation(rule)
+err := ValidateRuleName("Use (Smart) Names")
 ```
 
 **Expected Output:**
 ```go
-err.Error() == "rule.name cannot contain parentheses: 'Use (Smart) Names'"
+err.Error() == "rule name cannot contain parentheses: 'Use (Smart) Names'"
 ```
 
 **Verification:**
@@ -373,13 +290,7 @@ err.Error() == "rule.name cannot contain parentheses: 'Use (Smart) Names'"
 
 **Input:**
 ```go
-rule := Rule{
-    ID: "meaningfulNames",
-    Name: "Use Meaningful Names",
-    Enforcement: "must",
-}
-
-err := ValidateRuleForCompilation(rule)
+err := ValidateRuleName("Use Meaningful Names")
 ```
 
 **Expected Output:**
@@ -394,8 +305,9 @@ err == nil
 ## Notes
 
 **Design Rationale:**
-- **Fail fast** - Validation occurs before any compilation work
-- **Clear errors** - Users know exactly which ID and character is problematic
+- **Simple functions** - Validate individual IDs and names, not entire resources
+- **Called during compilation** - Validation happens as items are processed
+- **Clear errors** - Users know exactly which ID or name is problematic
 - **Cross-platform** - Rules ensure compatibility across Windows, macOS, Linux
 - **Shell-safe** - Avoids characters with special meaning in shells
 
@@ -408,8 +320,8 @@ err == nil
 
 **Error Handling Strategy:**
 - Return first error encountered (fail fast)
-- Could be extended to collect all errors for batch reporting
-- ValidationError struct allows programmatic error handling
+- Simple error strings, not complex error types
+- Validation integrated into compilation pipeline
 
 ## Known Issues
 
@@ -417,7 +329,6 @@ None - this is a new specification.
 
 ## Areas for Improvement
 
-- Consider adding `ValidateAllResourceIDs([]Resource)` for batch validation
-- Evaluate whether to allow dots (.) for namespacing (e.g., "org.cleanCode")
 - Consider maximum length validation for IDs (filesystem limits)
 - Explore Unicode support for international characters (requires careful testing)
+- Add validation for reserved names (e.g., "CON", "PRN" on Windows)

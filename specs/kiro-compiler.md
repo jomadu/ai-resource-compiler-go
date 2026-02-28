@@ -27,14 +27,16 @@ Generate Kiro CLI steering rules and prompts in the format expected by Kiro's co
 type KiroCompiler struct{}
 
 func (k *KiroCompiler) Name() string
-func (k *KiroCompiler) Compile(resource Resource) ([]CompilationResult, error)
 func (k *KiroCompiler) SupportedVersions() []string
+func (k *KiroCompiler) Compile(resource *airesource.Resource) ([]CompilationResult, error)
 ```
 
 **Methods:**
 - `Name()` - Returns "kiro"
+- `SupportedVersions()` - Returns `["ai-resource/draft"]`
 - `Compile()` - Transforms resource into Kiro format
-- `SupportedVersions()` - Returns `["ai-resource/v1"]`
+  - Handles Rule, Ruleset, Prompt, Promptset kinds
+  - Returns one result per rule/prompt
 
 ### Output Structure
 
@@ -56,27 +58,85 @@ func (k *KiroCompiler) SupportedVersions() []string
 
 ## Algorithm
 
-1. Determine resource type (rule vs prompt)
-2. Generate path using shared path functions
-3. If rule:
-   - Call `GenerateMetadataBlock(ruleset, rule)` from `internal/format/metadata.go`
-   - Call `GenerateEnforcementHeader(rule)` from `internal/format/metadata.go`
-   - Concatenate: metadata + header + body
-4. If prompt:
-   - Use body content only
-5. Return CompilationResult with path and content
+1. Check resource kind (Rule, Ruleset, Prompt, Promptset)
+2. Expand collections into individual items
+3. For each item:
+   - Resolve body using `airesource.ResolveBody(body, fragments)`
+   - Validate IDs using `ValidateID()`
+   - For rules: validate name using `ValidateRuleName()`
+   - Generate path using shared path functions
+   - Generate content (metadata + header + body for rules, body only for prompts)
+4. Return array of CompilationResults
 
 **Pseudocode:**
 ```
 function Compile(resource):
-    if resource.type == "rule":
-        path = BuildRulePath(resource.rulesetID, resource.ruleID, ".md")
-        metadata = GenerateMetadataBlock(resource.ruleset, resource.rule)
-        header = GenerateEnforcementHeader(resource.rule)
-        content = metadata + "\n" + header + "\n\n" + resource.body
-    else:
-        path = BuildPromptPath(resource.promptsetID, resource.promptID, ".md")
-        content = resource.body
+    results = []
+    
+    switch resource.Kind:
+    case "Rule":
+        rule = resource.AsRule()
+        result = compileRule(rule.Metadata, rule.Metadata.ID, rule.Spec, rule.Spec.Fragments)
+        results.append(result)
+    
+    case "Ruleset":
+        ruleset = resource.AsRuleset()
+        for ruleID, ruleItem in ruleset.Spec.Rules:
+            result = compileRule(ruleset.Metadata, ruleID, ruleItem, ruleset.Spec.Fragments)
+            results.append(result)
+    
+    case "Prompt":
+        prompt = resource.AsPrompt()
+        result = compilePrompt(prompt.Metadata, prompt.Metadata.ID, prompt.Spec, prompt.Spec.Fragments)
+        results.append(result)
+    
+    case "Promptset":
+        promptset = resource.AsPromptset()
+        for promptID, promptItem in promptset.Spec.Prompts:
+            result = compilePrompt(promptset.Metadata, promptID, promptItem, promptset.Spec.Fragments)
+            results.append(result)
+    
+    return results
+
+function compileRule(metadata, ruleID, ruleSpec, fragments):
+    // Resolve body
+    resolvedBody = airesource.ResolveBody(ruleSpec.Body, fragments)
+    
+    // Validate
+    ValidateID(metadata.ID)
+    ValidateID(ruleID)
+    ValidateRuleName(ruleSpec.Name)
+    
+    // Generate path
+    if resource.Kind == "Ruleset":
+        path = BuildCollectionPath(metadata.ID, ruleID, ".md")
+    else:  // resource.Kind == "Rule"
+        path = BuildStandalonePath(metadata.ID, ".md")
+    
+    // Generate complete content
+    if resource.Kind == "Ruleset":
+        content = GenerateRuleMetadataBlockFromRuleset(resource, ruleID)
+    else:  // resource.Kind == "Rule"
+        content = GenerateRuleMetadataBlockFromRule(resource)
+    
+    return CompilationResult{Path: path, Content: content}
+
+function compilePrompt(metadata, promptID, promptSpec, fragments):
+    // Resolve body
+    resolvedBody = airesource.ResolveBody(promptSpec.Body, fragments)
+    
+    // Validate
+    ValidateID(metadata.ID)
+    ValidateID(promptID)
+    
+    // Generate path
+    if resource.Kind == "Promptset":
+        path = BuildCollectionPath(metadata.ID, promptID, ".md")
+    else:  // resource.Kind == "Prompt"
+        path = BuildStandalonePath(metadata.ID, ".md")
+    
+    // Use body only
+    content = resolvedBody
     
     return CompilationResult{Path: path, Content: content}
 ```
@@ -267,6 +327,138 @@ Never commit secrets to version control.`,
 
 **Installation:**
 Write to `.kiro/steering/security_noHardcodedSecrets.md`
+
+### Example 4: Ruleset Expansion
+
+**Input:**
+```go
+resource := Resource{
+    Kind: "Ruleset",
+    Metadata: Metadata{
+        ID: "cleanCode",
+        Name: "Clean Code",
+    },
+    Spec: RulesetSpec{
+        Rules: map[string]RuleItem{
+            "meaningfulNames": {
+                Name: "Use Meaningful Names",
+                Enforcement: "must",
+                Body: "Use descriptive names.",
+            },
+            "smallFunctions": {
+                Name: "Keep Functions Small",
+                Enforcement: "should",
+                Body: "Functions should do one thing.",
+            },
+        },
+    },
+}
+
+compiler := &KiroCompiler{}
+results, err := compiler.Compile(resource)
+```
+
+**Expected Output:**
+```go
+[]CompilationResult{
+    {
+        Path: "cleanCode_meaningfulNames.md",
+        Content: `---
+ruleset:
+  id: cleanCode
+  name: Clean Code
+  rules:
+    - meaningfulNames
+    - smallFunctions
+rule:
+  id: meaningfulNames
+  name: Use Meaningful Names
+  enforcement: must
+---
+
+# Use Meaningful Names (MUST)
+
+Use descriptive names.`,
+    },
+    {
+        Path: "cleanCode_smallFunctions.md",
+        Content: `---
+ruleset:
+  id: cleanCode
+  name: Clean Code
+  rules:
+    - meaningfulNames
+    - smallFunctions
+rule:
+  id: smallFunctions
+  name: Keep Functions Small
+  enforcement: should
+---
+
+# Keep Functions Small (SHOULD)
+
+Functions should do one thing.`,
+    },
+}
+```
+
+**Verification:**
+- Ruleset expanded into two separate files
+- Each file includes full ruleset context
+- Rules list shows all rules in ruleset
+- Paths follow {collection-id}_{item-id}.md pattern
+
+### Example 5: Body with Fragments
+
+**Input:**
+```go
+resource := Resource{
+    Kind: "Rule",
+    Metadata: Metadata{
+        ID: "errorHandling",
+        Name: "Error Handling",
+    },
+    Spec: RuleSpec{
+        Name: "Handle All Errors",
+        Enforcement: "must",
+        Body: "{{intro}}\n\n{{examples}}",
+        Fragments: map[string]string{
+            "intro": "Always handle errors explicitly.",
+            "examples": "Use if err != nil checks in Go.",
+        },
+    },
+}
+
+compiler := &KiroCompiler{}
+results, err := compiler.Compile(resource)
+```
+
+**Expected Output:**
+```go
+[]CompilationResult{
+    {
+        Path: "errorHandling.md",
+        Content: `---
+rule:
+  id: errorHandling
+  name: Handle All Errors
+  enforcement: must
+---
+
+# Handle All Errors (MUST)
+
+Always handle errors explicitly.
+
+Use if err != nil checks in Go.`,
+    },
+}
+```
+
+**Verification:**
+- Body fragments resolved using `airesource.ResolveBody()`
+- Fragments replaced with actual content
+- Standalone rule (no ruleset context)
+- Path uses rule ID only
 
 ## Notes
 

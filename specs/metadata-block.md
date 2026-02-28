@@ -25,12 +25,12 @@ Preserve ruleset and rule context in compiled rule output so that AI coding tool
 ---
 ruleset:
   id: string
-  name: string
+  name: string (optional)
   description: string (optional)
   rules: []string
 rule:
   id: string
-  name: string
+  name: string (optional)
   description: string (optional)
   enforcement: string
   scope: object (optional)
@@ -38,16 +38,35 @@ rule:
 ---
 ```
 
-**Fields:**
-- `ruleset.id` - Unique identifier for the ruleset collection
-- `ruleset.name` - Human-readable ruleset name
-- `ruleset.description` - Optional description of ruleset purpose
-- `ruleset.rules` - List of rule IDs in this ruleset
-- `rule.id` - Unique identifier for this specific rule
-- `rule.name` - Human-readable rule name
-- `rule.description` - Optional description of rule purpose
-- `rule.enforcement` - Enforcement level (must, should, may)
-- `rule.scope.files` - Optional file patterns where rule applies
+**For rules in rulesets:**
+- `ruleset.id` - Collection metadata ID
+- `ruleset.name` - Collection metadata name (optional, from Metadata.Name)
+- `ruleset.description` - Collection metadata description (optional, from Metadata.Description)
+- `ruleset.rules` - List of rule IDs from collection (map keys)
+- `rule.id` - Item ID (map key from Ruleset.Spec.Rules)
+- `rule.name` - Item name (optional, from RuleItem.Name)
+- `rule.description` - Item description (optional, from RuleItem.Description)
+- `rule.enforcement` - Enforcement level (may, should, must)
+- `rule.scope.files` - File patterns where rule applies (extracted from []ScopeEntry)
+
+**For standalone rules:**
+```yaml
+---
+id: string
+name: string (optional)
+description: string (optional)
+enforcement: string
+scope: object (optional)
+  files: []string
+---
+```
+
+- No nesting - fields at root level
+- `id` - Resource metadata ID
+- `name` - Resource metadata name (optional, from Metadata.Name)
+- `description` - Resource metadata description (optional, from Metadata.Description)
+- `enforcement` - Enforcement level (may, should, must)
+- `scope.files` - File patterns where rule applies (extracted from []ScopeEntry)
 
 ### Enforcement Header
 ```
@@ -61,45 +80,51 @@ rule:
 
 ## Shared Functions
 
-Target compilers use these shared functions to generate consistent metadata blocks and enforcement headers.
+Target compilers use these shared functions to generate consistent metadata blocks for rules.
 
-### GenerateMetadataBlock
+### GenerateRuleMetadataBlockFromRuleset
 
 ```go
-func GenerateMetadataBlock(ruleset Ruleset, rule Rule) string
+func GenerateRuleMetadataBlockFromRuleset(
+    ruleset *airesource.Ruleset,
+    ruleID string,
+) string
 ```
 
 **Parameters:**
-- `ruleset` - Ruleset containing the rule (provides context)
-- `rule` - Rule to generate metadata for
+- `ruleset` - Ruleset resource
+- `ruleID` - Rule ID (map key from Ruleset.Spec.Rules)
 
 **Returns:**
-- YAML metadata block string with `---` delimiters
+- Complete compiled rule content: metadata block + enforcement header + resolved body
 
 **Algorithm:**
-1. Create YAML structure with `ruleset` and `rule` sections
-2. Add required ruleset fields: `id`, `name`, `rules`
-3. Add optional `ruleset.description` if present
-4. Add required rule fields: `id`, `name`, `enforcement`
-5. Add optional `rule.description` if present
-6. Add optional `rule.scope` if present
-7. Serialize to YAML with `---` delimiters
-8. Return formatted string
+1. Get ruleSpec from ruleset.Spec.Rules[ruleID]
+2. Resolve body using airesource.ResolveBody(ruleSpec.Body, ruleset.Spec.Fragments)
+3. Create YAML metadata block with ruleset and rule sections
+4. Generate enforcement header: `# {Name} ({ENFORCEMENT})`
+5. Concatenate: metadata block + enforcement header + resolved body
+6. Return complete content
 
 **Example:**
 ```go
-ruleset := Ruleset{
-    ID: "cleanCode",
-    Name: "Clean Code",
-    Rules: []string{"meaningfulNames"},
-}
-rule := Rule{
-    ID: "meaningfulNames",
-    Name: "Use Meaningful Names",
-    Enforcement: "must",
+ruleset := &airesource.Ruleset{
+    Metadata: airesource.Metadata{
+        ID: "cleanCode",
+        Name: "Clean Code",
+    },
+    Spec: airesource.RulesetSpec{
+        Rules: map[string]airesource.RuleItem{
+            "meaningfulNames": {
+                Name: "Use Meaningful Names",
+                Enforcement: airesource.EnforcementMust,
+                Body: airesource.Body{String: &bodyStr},
+            },
+        },
+    },
 }
 
-metadata := GenerateMetadataBlock(ruleset, rule)
+content := GenerateRuleMetadataBlockFromRuleset(ruleset, "meaningfulNames")
 // Returns:
 // ---
 // ruleset:
@@ -112,56 +137,83 @@ metadata := GenerateMetadataBlock(ruleset, rule)
 //   name: Use Meaningful Names
 //   enforcement: must
 // ---
+//
+// # Use Meaningful Names (MUST)
+//
+// [resolved body content]
 ```
 
-### GenerateEnforcementHeader
+### GenerateRuleMetadataBlockFromRule
 
 ```go
-func GenerateEnforcementHeader(rule Rule) string
+func GenerateRuleMetadataBlockFromRule(
+    rule *airesource.Rule,
+) string
 ```
 
 **Parameters:**
-- `rule` - Rule to generate header for
+- `rule` - Standalone Rule resource
 
 **Returns:**
-- Markdown header string in format `# {Name} ({ENFORCEMENT})`
+- Complete compiled rule content: metadata block + enforcement header + resolved body
 
 **Algorithm:**
-1. Extract rule name from `rule.Name`
-2. Extract enforcement level from `rule.Enforcement`
-3. Uppercase enforcement level (must → MUST)
-4. Format as `# {Name} ({ENFORCEMENT})`
-5. Return formatted string
+1. Resolve body using airesource.ResolveBody(rule.Spec.Body, rule.Spec.Fragments)
+2. Create YAML metadata block with fields at root level (no rule wrapper)
+3. Add fields from rule.Metadata and rule.Spec (id, name, description, enforcement, scope)
+4. Generate enforcement header: `# {Name} ({ENFORCEMENT})`
+5. Concatenate: metadata block + enforcement header + resolved body
+6. Return complete content
 
 **Example:**
 ```go
-rule := Rule{
-    Name: "Use Meaningful Names",
-    Enforcement: "must",
+rule := &airesource.Rule{
+    Metadata: airesource.Metadata{
+        ID: "meaningfulNames",
+        Name: "Use Meaningful Names",
+    },
+    Spec: airesource.RuleSpec{
+        Enforcement: airesource.EnforcementMust,
+        Body: airesource.Body{String: &bodyStr},
+    },
 }
 
-header := GenerateEnforcementHeader(rule)
-// Returns: "# Use Meaningful Names (MUST)"
+content := GenerateRuleMetadataBlockFromRule(rule)
+// Returns:
+// ---
+// id: meaningfulNames
+// name: Use Meaningful Names
+// enforcement: must
+// ---
+//
+// # Use Meaningful Names (MUST)
+//
+// [resolved body content]
 ```
 
 ## Algorithm
 
-1. Check resource type (rule vs prompt)
-2. If prompt: return body content only
-3. If rule: call `GenerateMetadataBlock(ruleset, rule)`
-4. Call `GenerateEnforcementHeader(rule)`
-5. Concatenate: metadata block + enforcement header + rule body
+1. Check resource kind (Rule, Ruleset, Prompt, Promptset)
+2. If prompt: resolve body and return (no metadata block)
+3. If ruleset: call `GenerateRuleMetadataBlockFromRuleset(ruleset, ruleID)` for each rule
+4. If standalone rule: call `GenerateRuleMetadataBlockFromRule(rule)`
 
 **Pseudocode:**
 ```
-function EmbedMetadata(resource):
-    if resource.type == "prompt":
-        return resource.body
-    
-    metadata = GenerateMetadataBlock(resource.ruleset, resource.rule)
-    header = GenerateEnforcementHeader(resource.rule)
-    
-    return metadata + "\n" + header + "\n\n" + resource.body
+function CompileRule(resource, ruleID):
+    if resource.Kind == "Ruleset":
+        return GenerateRuleMetadataBlockFromRuleset(resource, ruleID)
+    else:  // resource.Kind == "Rule"
+        return GenerateRuleMetadataBlockFromRule(resource)
+
+function CompilePrompt(resource, promptID):
+    if resource.Kind == "Promptset":
+        promptset = resource.AsPromptset()
+        promptSpec = promptset.Spec.Prompts[promptID]
+        return airesource.ResolveBody(promptSpec.Body, promptset.Spec.Fragments)
+    else:  // resource.Kind == "Prompt"
+        prompt = resource.AsPrompt()
+        return airesource.ResolveBody(prompt.Spec.Body, prompt.Spec.Fragments)
 ```
 
 ## Edge Cases
@@ -176,18 +228,18 @@ function EmbedMetadata(resource):
 
 ## Dependencies
 
-- Resource model from ai-resource-core-go (provides ruleset, rule, prompt structures)
+- Resource model from ai-resource-core-go (Metadata, RuleItem, PromptItem, Enforcement)
 - YAML serialization library for metadata block generation
 
 ## Implementation Mapping
 
 **Source files:**
-- `internal/format/metadata.go` - Implements `GenerateMetadataBlock()` and `GenerateEnforcementHeader()` functions
-- `pkg/compiler/compiler.go` - Integration point for metadata embedding
+- `internal/format/metadata.go` - Implements `GenerateRuleMetadataBlockFromRuleset()` and `GenerateRuleMetadataBlockFromRule()` functions
+- `pkg/targets/*.go` - Target compilers call these functions when compiling rules
 
 **Related specs:**
 - `compiler-architecture.md` - Defines where metadata embedding fits in compilation pipeline
-- All target compiler specs - Each target uses metadata blocks for rules by calling shared functions
+- All target compiler specs - Each target uses these functions for rule compilation
 
 ## Examples
 
@@ -195,7 +247,7 @@ function EmbedMetadata(resource):
 
 **Input:**
 ```go
-Resource{
+resource := Resource{
     Type: "rule",
     Ruleset: Ruleset{
         ID: "cleanCode",
@@ -246,8 +298,9 @@ Variables and functions should have descriptive names that reveal intent.
 - Metadata block present with all fields
 - Enforcement header shows "MUST" (uppercased)
 - Body content follows header
+- Uses `GenerateRuleMetadataBlockFromRuleset()` for Ruleset
 
-### Example 2: Minimal Metadata Block
+### Example 2: Minimal Metadata Block (Standalone Rule)
 
 **Input:**
 ```go
@@ -270,15 +323,9 @@ Resource{
 **Expected Output:**
 ```yaml
 ---
-ruleset:
-  id: cleanCode
-  name: Clean Code
-  rules:
-    - meaningfulNames
-rule:
-  id: meaningfulNames
-  name: Use Meaningful Names
-  enforcement: should
+id: meaningfulNames
+name: Use Meaningful Names
+enforcement: should
 ---
 
 # Use Meaningful Names (SHOULD)
@@ -287,9 +334,12 @@ Use descriptive names.
 ```
 
 **Verification:**
+- No ruleset section (standalone rule)
+- No rule wrapper (fields at root level)
 - Optional fields (description, scope) omitted
 - Enforcement header shows "SHOULD"
 - Minimal valid metadata block
+- Uses `GenerateRuleMetadataBlockFromRule()` for standalone Rule
 
 ### Example 3: Prompt (No Metadata)
 
@@ -327,9 +377,13 @@ The metadata block format is designed to be:
 - **Consistent** - Same structure across all target formats
 - **Minimal** - Optional fields can be omitted to reduce noise
 
-The enforcement header provides immediate visual feedback about rule importance without requiring tools to parse YAML.
+The enforcement header (generated internally) provides immediate visual feedback about rule importance without requiring tools to parse YAML.
 
 Prompts intentionally exclude metadata because they represent reusable instructions rather than constraints with enforcement levels.
+
+The two functions handle the distinct cases:
+- **FromRuleset** - Rule is part of a collection, needs full context
+- **FromRule** - Standalone rule, uses its own metadata for both ruleset and rule sections
 
 ## Known Issues
 
