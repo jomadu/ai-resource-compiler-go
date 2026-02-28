@@ -88,7 +88,7 @@
     {
       "id": "TASK-008",
       "priority": 2,
-      "status": "TODO",
+      "status": "DONE",
       "dependencies": [
         "TASK-003",
         "TASK-004",
@@ -96,7 +96,9 @@
         "TASK-007"
       ],
       "description": "Implement Markdown compiler in pkg/targets/markdown.go - MarkdownCompiler struct implementing TargetCompiler, .md extension, metadata blocks for rules. See PLAN.md Task 2.2, AUDIT.md #6, specs/markdown-compiler.md",
-      "comments": []
+      "comments": [
+        "Completed: Created pkg/targets/markdown.go with MarkdownCompiler implementing TargetCompiler interface. Handles Rule, Ruleset, Prompt, Promptset kinds. Added Prompt/Promptset types and exported ResolveBody in internal/format/metadata.go. go build ./... and go vet ./... succeed."
+      ]
     },
     {
       "id": "TASK-009",

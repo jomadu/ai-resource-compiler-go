@@ -49,6 +49,29 @@ type Rule struct {
 	Spec     RuleSpec
 }
 
+type PromptItem struct {
+	Name string
+	Body Body
+}
+
+type PromptSpec struct {
+	Body      Body
+	Fragments map[string]string
+}
+
+type Promptset struct {
+	Metadata Metadata
+	Spec     struct {
+		Prompts   map[string]PromptItem
+		Fragments map[string]string
+	}
+}
+
+type Prompt struct {
+	Metadata Metadata
+	Spec     PromptSpec
+}
+
 // GenerateRuleMetadataBlockFromRuleset generates complete rule content from a ruleset.
 // Returns: metadata block + enforcement header + resolved body
 func GenerateRuleMetadataBlockFromRuleset(ruleset *Ruleset, ruleID string) string {
@@ -133,6 +156,11 @@ func GenerateRuleMetadataBlockFromRule(rule *Rule) string {
 
 func generateEnforcementHeader(name, enforcement string) string {
 	return fmt.Sprintf("# %s (%s)", name, strings.ToUpper(enforcement))
+}
+
+// ResolveBody resolves body content with fragment substitution.
+func ResolveBody(body Body, fragments map[string]string) string {
+	return resolveBody(body, fragments)
 }
 
 func resolveBody(body Body, fragments map[string]string) string {
