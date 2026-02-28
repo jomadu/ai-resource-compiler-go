@@ -216,13 +216,15 @@
     {
       "id": "TASK-017",
       "priority": 3,
-      "status": "TODO",
+      "status": "DONE",
       "dependencies": [
         "TASK-015",
         "TASK-016"
       ],
       "description": "Install CLI tool - Run 'go install ./cmd/arc' to make arc command available system-wide. See PLAN.md Task 3.4",
-      "comments": []
+      "comments": [
+        "Completed: Ran 'go install ./cmd/arc' successfully. Binary installed to ~/go/bin/arc (3.4MB). Installation verified."
+      ]
     },
     {
       "id": "TASK-018",
