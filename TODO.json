@@ -84,7 +84,7 @@
     {
       "id": "TASK-005",
       "priority": 2,
-      "status": "TODO",
+      "status": "DONE",
       "dependencies": [
         "TASK-001",
         "TASK-002",
@@ -98,7 +98,8 @@
         "Verify all command examples are still valid",
         "Update any resource structure references to match actual API",
         "Minimal changes expected - mostly version updates",
-        "Acceptance: All version references correct, examples valid"
+        "Acceptance: All version references correct, examples valid",
+        "Completed: Verified cli-design.md contains no API version references or resource structure details. Spec is CLI-focused and uses abstract references. All examples valid. No changes needed."
       ]
     },
     {
