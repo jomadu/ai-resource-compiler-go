@@ -37,12 +37,14 @@
     {
       "id": "TASK-004",
       "priority": 1,
-      "status": "TODO",
+      "status": "DONE",
       "dependencies": [
         "TASK-001"
       ],
       "description": "Implement path generation functions in internal/format/paths.go - BuildCollectionPath(), BuildStandalonePath(), BuildClaudeCollectionPath(), BuildClaudeStandalonePath(). See PLAN.md Task 1.4, AUDIT.md #3, specs/compiler-architecture.md Shared Functions",
-      "comments": []
+      "comments": [
+        "Completed: Created internal/format/paths.go with 4 path generation functions. go build ./... succeeds."
+      ]
     },
     {
       "id": "TASK-005",
