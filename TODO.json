@@ -148,7 +148,7 @@
     {
       "id": "TASK-012",
       "priority": 2,
-      "status": "TODO",
+      "status": "DONE",
       "dependencies": [
         "TASK-003",
         "TASK-004",
@@ -156,7 +156,9 @@
         "TASK-007"
       ],
       "description": "Implement Copilot compiler in pkg/targets/copilot.go - CopilotCompiler struct, .instructions.md for rules, .prompt.md for prompts, applyTo frontmatter. See PLAN.md Task 2.6, AUDIT.md #10, specs/copilot-compiler.md",
-      "comments": []
+      "comments": [
+        "Completed: Created pkg/targets/copilot.go with CopilotCompiler implementing TargetCompiler interface. Rules use .instructions.md extension with applyTo frontmatter and metadata blocks. Prompts use .prompt.md extension with applyTo frontmatter only. go build ./... succeeds."
+      ]
     },
     {
       "id": "TASK-013",
