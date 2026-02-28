@@ -45,12 +45,14 @@
     {
       "id": "TASK-005",
       "priority": 1,
-      "status": "TODO",
+      "status": "DONE",
       "dependencies": [
         "TASK-001"
       ],
       "description": "Implement validation functions in internal/format/validation.go - ValidateID() (alphanumeric + hyphen + underscore only), ValidateRuleName() (no parentheses). See PLAN.md Task 1.5, AUDIT.md #4, specs/validation-rules.md",
-      "comments": []
+      "comments": [
+        "Completed: Created internal/format/validation.go with ValidateID() and ValidateRuleName(). go build ./... succeeds."
+      ]
     },
     {
       "id": "TASK-006",
