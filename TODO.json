@@ -72,14 +72,16 @@
     {
       "id": "TASK-007",
       "priority": 2,
-      "status": "TODO",
+      "status": "DONE",
       "dependencies": [
         "TASK-001",
         "TASK-004",
         "TASK-005"
       ],
       "description": "Implement metadata generation in internal/format/metadata.go - GenerateRuleMetadataBlockFromRuleset(), GenerateRuleMetadataBlockFromRule() with YAML blocks and enforcement headers. See PLAN.md Task 2.1, AUDIT.md #5, specs/metadata-block.md",
-      "comments": []
+      "comments": [
+        "Completed: Created internal/format/metadata.go with GenerateRuleMetadataBlockFromRuleset() and GenerateRuleMetadataBlockFromRule(). Includes YAML metadata blocks, enforcement headers, optional field handling, and body resolution. go build ./... succeeds."
+      ]
     },
     {
       "id": "TASK-008",
