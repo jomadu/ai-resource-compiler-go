@@ -265,7 +265,7 @@
     {
       "id": "TASK-021",
       "priority": 3,
-      "status": "TODO",
+      "status": "DONE",
       "dependencies": [
         "TASK-008",
         "TASK-009",
@@ -274,7 +274,9 @@
         "TASK-012"
       ],
       "description": "Write unit tests for target compilers - Create *_test.go for each target (markdown, kiro, cursor, claude, copilot), test all resource kinds, verify paths and content. See PLAN.md Task 4.4",
-      "comments": []
+      "comments": [
+        "Completed: Created unit tests for all 5 target compilers (markdown_test.go, kiro_test.go, cursor_test.go, claude_test.go, copilot_test.go). Tests cover all 4 resource kinds (Rule, Ruleset, Prompt, Promptset), verify paths and content per spec. All tests pass."
+      ]
     },
     {
       "id": "TASK-022",
