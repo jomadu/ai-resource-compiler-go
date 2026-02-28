@@ -241,12 +241,14 @@
     {
       "id": "TASK-019",
       "priority": 3,
-      "status": "TODO",
+      "status": "DONE",
       "dependencies": [
         "TASK-005"
       ],
       "description": "Write unit tests for validation in internal/format/validation_test.go - Test ValidateID() and ValidateRuleName() with valid/invalid cases. See PLAN.md Task 4.2, specs/validation-rules.md Edge Cases",
-      "comments": []
+      "comments": [
+        "Completed: Created internal/format/validation_test.go with comprehensive tests for ValidateID() and ValidateRuleName(). Tests cover valid cases (alphanumeric, hyphens, underscores) and invalid cases (empty, special characters, parentheses). All tests pass."
+      ]
     },
     {
       "id": "TASK-020",
