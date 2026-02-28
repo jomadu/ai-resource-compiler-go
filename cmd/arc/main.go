@@ -118,8 +118,4 @@ func printHelp() {
 	fmt.Println("  arc -target cursor -target kiro -target claude -target copilot -target markdown -output ./output resource.yaml")
 }
 
-func compile(resourceFile string, targets []string, output string, flat bool) error {
-	// Placeholder - will be implemented in TASK-015
-	fmt.Fprintf(os.Stderr, "TODO: compile(%s, %v, %s, %v)\n", resourceFile, targets, output, flat)
-	return nil
-}
+

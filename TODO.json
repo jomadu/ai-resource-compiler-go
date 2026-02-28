@@ -192,12 +192,14 @@
     {
       "id": "TASK-015",
       "priority": 3,
-      "status": "TODO",
+      "status": "DONE",
       "dependencies": [
         "TASK-014"
       ],
       "description": "Implement compile command logic in cmd/arc/compile.go - Validate args, load resource, create compiler, compile resource. See PLAN.md Task 3.2, specs/cli-design.md Algorithm",
-      "comments": []
+      "comments": [
+        "Completed: Created cmd/arc/compile.go with compile() function. Loads YAML resource, converts string targets to Target enum, creates compiler, invokes Compile(), returns results. Implements outputStdout() with path separators. Placeholder outputFiles() for TASK-016. go build ./... and go vet ./... succeed."
+      ]
     },
     {
       "id": "TASK-016",
