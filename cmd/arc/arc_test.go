@@ -7,10 +7,6 @@ import (
 	"testing"
 )
 
-func strPtr(s string) *string {
-	return &s
-}
-
 func createTestResource(t *testing.T, dir string) string {
 	content := `apiVersion: ai-resource/draft
 kind: Rule
